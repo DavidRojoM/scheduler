@@ -13,13 +13,21 @@ import {
   CalendarEvent,
   CalendarEventTimesChangedEvent,
   CalendarView,
+  CalendarDateFormatter,
 } from 'angular-calendar';
 import { SharedModule } from '../../../../shared/shared.module';
 import { TaskModalComponent } from '../modals/task/task-modal.component';
 import { v4 } from 'uuid';
 import { TasksService } from '../../../../shared/services/tasks.service';
-import { TASK_COLORS } from '../../../../shared/constants/task.colors';
+import {
+  TASK_COLORS,
+  DAY_END_HOUR,
+  DAY_START_HOUR,
+  SEGMENTS_BY_HOUR,
+} from '../../../../shared/constants';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { CustomDateFormatter } from './date-formatter';
+import { isBefore } from 'date-fns';
 
 interface Task {
   id: string;
@@ -56,11 +64,21 @@ interface Task {
   ],
   templateUrl: './schedule.component.html',
   styleUrl: './schedule.component.scss',
+  providers: [
+    {
+      provide: CalendarDateFormatter,
+      useClass: CustomDateFormatter,
+    },
+  ],
   standalone: true,
   imports: [SharedModule],
 })
 export class ScheduleComponent implements OnInit {
   @ViewChild('modalContent', { static: true }) modalContent!: TemplateRef<any>;
+
+  hourSegments = SEGMENTS_BY_HOUR;
+  dayStartHour = DAY_START_HOUR;
+  dayEndHour = DAY_END_HOUR;
 
   columnId = input.required<string>();
 
@@ -236,5 +254,9 @@ export class ScheduleComponent implements OnInit {
     this.tasksService.deleteTask(taskId);
 
     this.refresh.next();
+  }
+
+  formatList(items: string[]): string {
+    return new Intl.ListFormat().format(items);
   }
 }

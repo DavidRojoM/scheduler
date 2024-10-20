@@ -10,9 +10,16 @@ import { ModalHeaderComponent } from '../../../../../shared/ui/components/modals
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { SharedModule } from '../../../../../shared/shared.module';
 import { NgSelectComponent } from '@ng-select/ng-select';
-import { addMinutes, getHours, getMinutes } from 'date-fns';
+import {
+  addMinutes,
+  differenceInMinutes,
+  getHours,
+  getMinutes,
+  isBefore,
+} from 'date-fns';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ParticipantsService } from '../../../../../shared/services/participants.service';
+import { SEGMENTS_BY_HOUR } from '../../../../../shared/constants/config';
 export interface Task {
   id: string;
   columnId: string;
@@ -36,6 +43,8 @@ export class TaskModalComponent implements OnInit {
   private readonly columnTitle!: ElementRef<HTMLInputElement>;
 
   modalTitle = 'Add Task';
+
+  segmentsPerHour = SEGMENTS_BY_HOUR;
 
   modalData!:
     | {
@@ -84,7 +93,10 @@ export class TaskModalComponent implements OnInit {
 
     if (this.modalData.type === 'add') {
       const startDate = new Date(this.modalData.task.date);
-      const endDate = addMinutes(new Date(this.modalData.task.date), 30);
+      const endDate = addMinutes(
+        new Date(this.modalData.task.date),
+        60 / this.segmentsPerHour
+      );
 
       const start = `${getHours(startDate)}:${getMinutes(startDate)}`;
       const end = `${getHours(endDate)}:${getMinutes(endDate)}`;
@@ -139,6 +151,14 @@ export class TaskModalComponent implements OnInit {
 
     const end = new Date();
     end.setHours(endHour, endMinute);
+
+    if (isBefore(end, start)) {
+      return;
+    }
+
+    if (Math.abs(differenceInMinutes(end, start)) < 60 / this.segmentsPerHour) {
+      return;
+    }
 
     this.modalData.saveHandler({
       id: this.modalData.task.id,

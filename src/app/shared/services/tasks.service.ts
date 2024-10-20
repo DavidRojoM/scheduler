@@ -83,7 +83,7 @@ export class TasksService {
     this.configService.setTasks(this._tasks);
   }
 
-  private setTasks(): void {
+  setTasks(): void {
     const config = this.configService.getConfig();
 
     this._tasks = config.tasks.map((task) => {

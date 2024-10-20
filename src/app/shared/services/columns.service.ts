@@ -34,7 +34,7 @@ export class ColumnsService {
     this.configService.setColumns(columns);
   }
 
-  private setColumns() {
+  setColumns() {
     const storedConfig = this.configService.getConfig();
 
     this._columns = storedConfig.columns;

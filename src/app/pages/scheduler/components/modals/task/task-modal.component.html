@@ -27,6 +27,7 @@
         placeholder="Not set"
         [noCalendar]="true"
         [time24hr]="true"
+        [minuteIncrement]="60 / segmentsPerHour"
       />
 
       <label for="end" class="text-gray-400">End</label>
@@ -38,6 +39,7 @@
         formControlName="end"
         [enableTime]="true"
         dateFormat="H:i"
+        [minuteIncrement]="60 / segmentsPerHour"
         placeholder="Not set"
         [noCalendar]="true"
         [time24hr]="true"
