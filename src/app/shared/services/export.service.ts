@@ -218,7 +218,7 @@ export class ExportService {
 
     for (const generatedSchedule of generatedSchedules) {
       const reader = new Uint8ArrayReader(generatedSchedule.pdf);
-      await zipWriter.add(`schedule/${generatedSchedule.participant}`, reader);
+      await zipWriter.add(`schedule/${generatedSchedule.participant}.pdf`, reader);
     }
 
     await zipWriter.close();
