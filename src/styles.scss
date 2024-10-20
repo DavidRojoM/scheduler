@@ -9,3 +9,29 @@
 @import "bootstrap/scss/bootstrap";
 @import "flatpickr/dist/flatpickr.css";
 @import "@ng-select/ng-select/themes/default.theme.css";
+
+* {
+  box-sizing: border-box;
+}
+
+/* ===== Scrollbar CSS ===== */
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #707070 #ffffff;
+}
+
+/* Chrome, Edge, and Safari */
+*::-webkit-scrollbar {
+  width: 2px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #ffffff;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: #707070;
+  border-radius: 10px;
+  border: 1px solid #ffffff;
+}
