@@ -1,7 +1,7 @@
 <main class="flex flex-col gap-2">
   <div class="flex flex-row gap-2 w-full bg-gray-600 p-2">
     <div
-      (click)="open(deleteConfirmation)"
+      (click)="open(wipeConfirmation)"
       class="grid place-content-center select-none p-4 rounded-full bg-red-400 hover:bg-red-500 transition-all h-10 w-fit cursor-pointer"
     >
       <div class="flex flex-row gap-2 items-center">
@@ -50,7 +50,7 @@
         >
           <button
             class="grid place-items-center w-[32px] h-[32px] rounded-full cursor-pointer hover:bg-blue-400 transition-all"
-            (click)="removeColumn(column.controls.id.value)"
+            (click)="open(deleteColumnConfirmation)"
           >
             <i class="ph ph-trash"></i>
           </button>
@@ -65,19 +65,52 @@
           (mousedown)="$event.stopPropagation()"
         />
       </div>
+      <ng-template #deleteColumnConfirmation let-modal>
+        <div class="modal-header">
+          <h4 class="modal-title" id="modal-basic-title">Profile update</h4>
+          <button
+            type="button"
+            class="btn-close"
+            aria-label="Close"
+            (click)="modal.dismiss()"
+          ></button>
+        </div>
+        <div class="modal-body">
+          Do you really want to remove '<b class="font-bold">{{
+            column.controls.title.value
+          }}</b
+          >' column?
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            (click)="removeColumn(column.controls.id.value); modal.close()"
+          >
+            Yes
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            (click)="modal.dismiss()"
+          >
+            No
+          </button>
+        </div>
+      </ng-template>
       }
     </form>
   </div>
 </main>
 
-<ng-template #deleteConfirmation let-modal>
+<ng-template #wipeConfirmation let-modal>
   <div class="modal-header">
     <h4 class="modal-title" id="modal-basic-title">Profile update</h4>
     <button
       type="button"
       class="btn-close"
       aria-label="Close"
-      (click)="modal.dismiss('Cross click')"
+      (click)="modal.dismiss()"
     ></button>
   </div>
   <div class="modal-body">Do you really want to wipe all the data?</div>
