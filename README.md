@@ -7,6 +7,7 @@
 
 ## Future Features
 
+- [ ] Forbid task intersection for the same participant.
 - [ ] Add Exporting hash support.
 - [ ] Update event template to support participants.
 - [ ] Export whole schedule support.
