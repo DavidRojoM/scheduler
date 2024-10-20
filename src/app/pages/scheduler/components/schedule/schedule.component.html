@@ -17,13 +17,13 @@
 </mwl-calendar-day-view>
 <ng-template #marker></ng-template>
 <ng-template #eventTitleTemplate let-event="event" let-view="view">
-  <article class="flex flex-col gap-1">
-    <header class="font-semi text-lg text-wrap">
+  <article class="flex flex-col justify-between h-full">
+    <header class="font-semi text-md text-wrap">
       {{ event.title }}
     </header>
     <footer>
       @if (event.participants.length) {
-      <span class="text-black">
+      <span class="text-black text-wrap text-xs">
         {{ formatList(event.participants) }}
       </span>
       }
