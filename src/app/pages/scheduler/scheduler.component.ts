@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  ElementRef,
   OnInit,
   TemplateRef,
   ViewChild,
@@ -32,6 +33,7 @@ import { ParticipantsService } from '../../shared/services/participants.service'
 import { ExportService } from '../../shared/services/export.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfigService } from '../../shared/services/config.service';
+import { toBlob } from 'html-to-image';
 
 @Component({
   selector: 'sch-scheduler',
@@ -216,5 +218,30 @@ export class SchedulerComponent implements OnInit {
 
   copyToClipboard() {
     navigator.clipboard.writeText(this.exportHash);
+  }
+
+  async takeScreenshot() {
+    // TODO(David): extract this logic to a worker
+    const $schedule = document.getElementById('schedule') as HTMLElement;
+    const imageBlob = await toBlob($schedule, {
+      skipFonts: true,
+      width: $schedule.scrollWidth,
+      height: $schedule.scrollHeight,
+      backgroundColor: '#bfdbfe',
+      type: 'image/png',
+    });
+
+    if (!imageBlob) {
+      return;
+    }
+
+    const url = URL.createObjectURL(imageBlob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'schedule.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   }
 }
