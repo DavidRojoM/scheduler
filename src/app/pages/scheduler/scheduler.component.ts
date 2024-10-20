@@ -3,6 +3,7 @@ import {
   Component,
   DestroyRef,
   OnInit,
+  TemplateRef,
   ViewChild,
   ViewEncapsulation,
 } from '@angular/core';
@@ -29,6 +30,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TasksService } from '../../shared/services/tasks.service';
 import { ParticipantsService } from '../../shared/services/participants.service';
 import { ExportService } from '../../shared/services/export.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   selector: 'sch-scheduler',
@@ -67,7 +69,8 @@ export class SchedulerComponent implements OnInit {
     private readonly tasksService: TasksService,
     private readonly participantsService: ParticipantsService,
     private readonly exportService: ExportService,
-    private readonly destroyRef: DestroyRef
+    private readonly destroyRef: DestroyRef,
+    private readonly modal: NgbModal
   ) {}
   ngOnInit(): void {
     this.columnsService.columns$
@@ -179,5 +182,9 @@ export class SchedulerComponent implements OnInit {
     const participants = this.participantsService.participants;
 
     this.exportService.export({ columns, tasks, participants });
+  }
+
+  open(content: TemplateRef<any>) {
+    this.modal.open(content, { ariaLabelledBy: 'confirmation' });
   }
 }
