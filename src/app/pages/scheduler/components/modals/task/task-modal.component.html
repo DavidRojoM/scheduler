@@ -1,0 +1,88 @@
+<section class="flex flex-col gap-2 p-4 min-h-screen">
+  <sch-modal-header [title]="modalTitle" (close)="closeModal()" />
+  <form
+    [formGroup]="form"
+    (submit)="save()"
+    class="flex flex-col gap-6 justify-between"
+  >
+    <div class="grid grid-cols-[100px_1fr] gap-2 items-center">
+      <label for="title" class="text-gray-400">Title</label>
+      <input
+        #title
+        id="title"
+        class="border border-gray-400 rounded-md w-full p-1"
+        type="text"
+        formControlName="title"
+      />
+
+      <label for="start" class="text-gray-400">Start</label>
+      <input
+        id="start"
+        class="form-control"
+        type="text"
+        mwlFlatpickr
+        formControlName="start"
+        [enableTime]="true"
+        dateFormat="H:i"
+        placeholder="Not set"
+        [noCalendar]="true"
+        [time24hr]="true"
+      />
+
+      <label for="end" class="text-gray-400">End</label>
+      <input
+        class="form-control"
+        id="end"
+        type="text"
+        mwlFlatpickr
+        formControlName="end"
+        [enableTime]="true"
+        dateFormat="H:i"
+        placeholder="Not set"
+        [noCalendar]="true"
+        [time24hr]="true"
+      />
+
+      <label for="participants" class="text-gray-400">Participants</label>
+      <ng-select
+        id="participants"
+        [items]="participantsService.participants$ | async"
+        [multiple]="true"
+        [closeOnSelect]="false"
+        bindLabel="name"
+        bindValue="name"
+        placeholder="Select participants"
+        formControlName="participants"
+        searchable="true"
+        dropdownPosition="bottom"
+        [hideSelected]="true"
+        [addTag]="true"
+        [clearSearchOnAdd]="true"
+      >
+      </ng-select>
+    </div>
+
+    <footer class="flex flex-row gap-2 items-center justify-between">
+      @if (modalData.type==='edit') {
+      <button
+        class="bg-red-400 text-white rounded-md px-4 py-2 mx-auto"
+        (click)="deleteTask(modalData.task.id)"
+      >
+        Delete
+      </button>
+      }
+      <button
+        type="submit"
+        class="text-white rounded-md px-4 py-2 mx-auto"
+        [ngClass]="{
+          'bg-blue-300': !form.valid,
+          'cursor-not-allowed': !form.valid,
+          'bg-blue-600': form.valid
+        }"
+        [disabled]="!form.valid"
+      >
+        Save
+      </button>
+    </footer>
+  </form>
+</section>
