@@ -1,0 +1,13 @@
+<mwl-calendar-day-view
+  [viewDate]="viewDate"
+  [events]="tasks"
+  (eventClicked)="handleEvent('task', $event.event)"
+  (eventTimesChanged)="eventTimesChanged($event)"
+  (hourSegmentClicked)="handleEvent('segment', $any($event))"
+  [dayStartHour]="6"
+  [dayEndHour]="21"
+  [currentTimeMarkerTemplate]="marker"
+  [refresh]="refresh"
+>
+</mwl-calendar-day-view>
+<ng-template #marker></ng-template>
