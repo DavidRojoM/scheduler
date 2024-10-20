@@ -9,6 +9,7 @@ import {
   Uint8ArrayReader,
   BlobReader,
 } from '@zip.js/zip.js';
+import { toBlob } from 'html-to-image';
 
 interface ExportConfig {
   columns: {
@@ -163,7 +164,7 @@ export class ExportService {
 
   constructor() {}
 
-  async export(config: ExportConfig): Promise<any> {
+  async exportParticipantSchedules(config: ExportConfig): Promise<void> {
     const columnsById = new Map<string, ExportConfig['columns'][number]>(
       config.columns.map((column) => [column.id, column])
     );
@@ -226,17 +227,85 @@ export class ExportService {
 
     for (const generatedSchedule of generatedSchedules) {
       const reader = new Uint8ArrayReader(generatedSchedule.pdf);
-      await zipWriter.add(`schedule/${generatedSchedule.participant}.pdf`, reader);
+      await zipWriter.add(
+        `schedule/${generatedSchedule.participant}.pdf`,
+        reader
+      );
     }
 
     await zipWriter.close();
 
     const blob = await zipFileWriter.getData();
+
+    this.downloadBlob(blob, 'schedules.zip');
+  }
+
+  async captureAndDownloadNode(nodeReference: string) {
+    const worker = new Worker(
+      new URL('../workers/image.worker', import.meta.url),
+      {
+        type: 'module',
+      }
+    );
+
+    const $node = document.querySelector(nodeReference);
+
+    if (!$node) {
+      throw new Error(`Node with reference ${nodeReference} not found`);
+    }
+
+    worker.postMessage({
+      nodeHTML: $node.outerHTML,
+      options: {
+        skipFonts: true,
+        width: $node.scrollWidth,
+        height: $node.scrollHeight,
+        backgroundColor: '#bfdbfe',
+        type: 'image/png',
+      },
+    });
+
+    worker.onmessage = ({ data }) => {
+      if (data.error) {
+        console.error(data.error);
+        throw new Error(data.error);
+      }
+
+      this.downloadBlob(data.imageBlob, 'schedule.png');
+
+      worker.terminate();
+    };
+  }
+
+  async takeScreenshotOfNodeAndDownload(nodeReference: string): Promise<void> {
+    const $node = document.querySelector(nodeReference);
+
+    if (!$node) {
+      throw new Error(`Node with reference ${nodeReference} not found`);
+    }
+
+    // TODO(David): extract this logic to a worker
+    const imageBlob = await toBlob($node as HTMLElement, {
+      skipFonts: true,
+      width: $node.scrollWidth,
+      height: $node.scrollHeight,
+      backgroundColor: '#bfdbfe',
+      type: 'image/png',
+    });
+
+    if (!imageBlob) {
+      throw new Error('Failed to take screenshot');
+    }
+
+    this.downloadBlob(imageBlob, 'schedule.png');
+  }
+
+  downloadBlob(blob: Blob, filename: string): void {
     const url = URL.createObjectURL(blob);
 
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'schedules.zip';
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
