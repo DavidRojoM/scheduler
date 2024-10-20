@@ -31,6 +31,7 @@ import { TasksService } from '../../shared/services/tasks.service';
 import { ParticipantsService } from '../../shared/services/participants.service';
 import { ExportService } from '../../shared/services/export.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ConfigService } from '../../shared/services/config.service';
 
 @Component({
   selector: 'sch-scheduler',
@@ -64,10 +65,13 @@ export class SchedulerComponent implements OnInit {
   })
   dropList!: CdkDropList;
 
+  exportHash = '';
+
   constructor(
     private readonly columnsService: ColumnsService,
     private readonly tasksService: TasksService,
     private readonly participantsService: ParticipantsService,
+    private readonly configService: ConfigService,
     private readonly exportService: ExportService,
     private readonly destroyRef: DestroyRef,
     private readonly modal: NgbModal
@@ -186,5 +190,31 @@ export class SchedulerComponent implements OnInit {
 
   open(content: TemplateRef<any>) {
     this.modal.open(content, { ariaLabelledBy: 'confirmation' });
+  }
+
+  columnDragStarted(columnContainer: HTMLDivElement) {
+    columnContainer.classList.add('dragging');
+  }
+
+  columnDragEnded(columnContainer: HTMLDivElement) {
+    columnContainer.classList.remove('dragging');
+  }
+
+  import(hash: string) {
+    const data = JSON.parse(atob(hash));
+    this.configService.setConfig(data);
+    this.columnsService.setColumns();
+    this.tasksService.setTasks();
+    this.participantsService.setParticipants();
+  }
+
+  updateExportHash() {
+    const config = this.configService.getConfig();
+
+    this.exportHash = btoa(JSON.stringify(config));
+  }
+
+  copyToClipboard() {
+    navigator.clipboard.writeText(this.exportHash);
   }
 }

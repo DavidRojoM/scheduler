@@ -21,6 +21,24 @@
       </div>
     </div>
     <div
+      (click)="updateExportHash(); open(exportModal)"
+      class="grid place-content-center select-none p-4 rounded-full bg-blue-200 hover:bg-blue-300 transition-all h-10 w-fit cursor-pointer"
+    >
+      <div class="flex flex-row gap-2 items-center">
+        <i class="ph ph-share-network"></i>
+        <span class="hidden md:block">Export</span>
+      </div>
+    </div>
+    <div
+      (click)="open(importModal)"
+      class="grid place-content-center select-none p-4 rounded-full bg-blue-200 hover:bg-blue-300 transition-all h-10 w-fit cursor-pointer"
+    >
+      <div class="flex flex-row gap-2 items-center">
+        <i class="ph ph-download-simple"></i>
+        <span class="hidden md:block">Import</span>
+      </div>
+    </div>
+    <div
       (click)="addColumn()"
       class="grid place-content-center select-none p-4 rounded-full bg-blue-200 hover:bg-blue-300 transition-all h-10 w-fit cursor-pointer"
     >
@@ -41,10 +59,17 @@
         @for (column of form.controls.columns.controls; track
         column.controls.id; let i = $index) {
         <div
+          #columnContainer
           class="flex flex-col divide-y w-[400px] min-w-[400px] select-none"
           cdkDrag
+          [cdkDragStartDelay]="{
+            touch: 200,
+            mouse: 0
+          }"
           [cdkDragLockAxis]="'x'"
           formArrayName="columns"
+          (cdkDragStarted)="columnDragStarted(columnContainer)"
+          (cdkDragEnded)="columnDragEnded(columnContainer)"
         >
           <header
             class="text-center bg-blue-500 rounded-t-md py-2 font-bold text-xl cursor-grabbing text-white flex flex-row gap-2 items-center justify-between px-4"
@@ -70,7 +95,7 @@
         </div>
         <ng-template #deleteColumnConfirmation let-modal>
           <div class="modal-header">
-            <h4 class="modal-title" id="modal-basic-title">Profile update</h4>
+            <h4 class="modal-title" id="modal-basic-title">Delete Column</h4>
             <button
               type="button"
               class="btn-close"
@@ -109,7 +134,7 @@
 
 <ng-template #wipeConfirmation let-modal>
   <div class="modal-header">
-    <h4 class="modal-title" id="modal-basic-title">Profile update</h4>
+    <h4 class="modal-title" id="modal-basic-title">Wipe Data</h4>
     <button
       type="button"
       class="btn-close"
@@ -132,6 +157,73 @@
       (click)="modal.dismiss()"
     >
       No
+    </button>
+  </div>
+</ng-template>
+
+<ng-template #exportModal let-modal>
+  <div class="modal-header">
+    <h4 class="modal-title" id="modal-basic-title">Export</h4>
+    <button
+      type="button"
+      class="btn-close"
+      aria-label="Close"
+      (click)="modal.dismiss()"
+    ></button>
+  </div>
+  <div class="modal-body">
+    <button
+      class="flex flex-row items-center gap-2 mx-auto text-white bg-blue-600 rounded-md px-4 py-2"
+      (click)="copyToClipboard(); modal.dismiss()"
+    >
+      <i class="ph ph-copy-simple text-xl"></i>
+      <span>Copy hash to clipboard</span>
+    </button>
+  </div>
+  <div class="modal-footer">
+    <button
+      type="button"
+      class="btn btn-outline-secondary"
+      (click)="modal.dismiss()"
+    >
+      Close
+    </button>
+  </div>
+</ng-template>
+
+<ng-template #importModal let-modal>
+  <div class="modal-header">
+    <h4 class="modal-title" id="modal-basic-title">Import</h4>
+    <button
+      type="button"
+      class="btn-close"
+      aria-label="Close"
+      (click)="modal.dismiss()"
+    ></button>
+  </div>
+  <div class="modal-body flex flex-col gap-2">
+    <span>Import schedule</span>
+    <input
+      type="text"
+      class="border rounded-md px-2 py-1"
+      #importField
+      placeholder="Enter import hash"
+    />
+  </div>
+  <div class="modal-footer">
+    <button
+      type="button"
+      class="btn btn-outline-secondary"
+      (click)="import(importField.value); modal.close()"
+    >
+      Import
+    </button>
+    <button
+      type="button"
+      class="btn btn-outline-secondary"
+      (click)="modal.dismiss()"
+    >
+      Cancel
     </button>
   </div>
 </ng-template>

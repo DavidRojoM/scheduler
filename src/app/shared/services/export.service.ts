@@ -178,6 +178,10 @@ export class ExportService {
         .filter((task) => task.participants.includes(participant.name))
         .sort((a, b) => a.start.getTime() - b.start.getTime());
 
+      if (!tasksOfParticipant) {
+        continue;
+      }
+
       const tuples: PdfScheduleTuple[] = tasksOfParticipant.map((task) => {
         const columnOfTask = columnsById.get(task.columnId);
 
@@ -211,6 +215,10 @@ export class ExportService {
         participant: participant.name,
         pdf,
       });
+    }
+
+    if (!generatedSchedules.length) {
+      return;
     }
 
     const zipFileWriter = new BlobWriter('application/zip');

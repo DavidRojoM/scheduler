@@ -38,7 +38,7 @@ export class ParticipantsService {
     );
   }
 
-  private setParticipants(): void {
+  setParticipants(): void {
     const storedConfig = this.configService.getConfig();
 
     this._participants = storedConfig.participants.map((participant) => ({

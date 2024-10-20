@@ -47,6 +47,45 @@ export class ConfigService {
     });
   }
 
+  setConfig(config: {
+    columns: {
+      id: string;
+      title: string;
+    }[];
+    tasks: Task[];
+    participants: string[];
+  }) {
+    this.localstorageService.set({
+      scope: 'columns',
+      value: config.columns,
+    });
+
+    this.localstorageService.set({
+      scope: 'participants',
+      value: config.participants,
+    });
+
+    this.localstorageService.set({
+      scope: 'tasks',
+      value: config.tasks.map((task) => {
+        const start = new Date(task.start);
+        const end = new Date(task.end);
+
+        const startHour = `${start.getHours()}:${start.getMinutes()}`;
+        const endHour = `${end.getHours()}:${end.getMinutes()}`;
+
+        return {
+          id: task.id,
+          title: task.title,
+          columnId: task.columnId,
+          startHour,
+          endHour,
+          participants: task.participants,
+        };
+      }),
+    });
+  }
+
   getConfig(): {
     columns: {
       id: string;
