@@ -9,16 +9,18 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ModalHeaderComponent } from '../../../../../shared/ui/components/modals/modal-header/modal-header.component';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { SharedModule } from '../../../../../shared/shared.module';
-import { NgSelectComponent } from '@ng-select/ng-select';
+import { NgSelectModule } from '@ng-select/ng-select';
 import {
   addMinutes,
   differenceInMinutes,
   getHours,
   getMinutes,
   isBefore,
+  areIntervalsOverlapping,
 } from 'date-fns';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ParticipantsService } from '../../../../../shared/services/participants.service';
+import { TasksService } from '../../../../../shared/services/tasks.service';
 import { SEGMENTS_BY_HOUR } from '../../../../../shared/constants/config';
 export interface Task {
   id: string;
@@ -34,7 +36,7 @@ export interface Task {
   templateUrl: './task-modal.component.html',
   styleUrl: './task-modal.component.scss',
   standalone: true,
-  imports: [ModalHeaderComponent, SharedModule, NgSelectComponent],
+  imports: [ModalHeaderComponent, SharedModule, NgSelectModule],
 })
 export class TaskModalComponent implements OnInit {
   @ViewChild('title', {
@@ -77,18 +79,36 @@ export class TaskModalComponent implements OnInit {
     }),
   });
 
+  conflictedParticipants = new Set<string>();
+  participantsWithConflictInfo: Array<{name: string, isConflicted: boolean, displayName: string}> = [];
+
   constructor(
     private activeModal: NgbActiveModal,
     private readonly destroyRef: DestroyRef,
-    readonly participantsService: ParticipantsService
+    readonly participantsService: ParticipantsService,
+    private readonly tasksService: TasksService
   ) {}
   ngOnInit(): void {
     this.form.controls.participants.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((participants) => {
         for (const participant of participants) {
-          this.participantsService.createIfNotExists(participant);
+          const participantName = typeof participant === 'string' ? participant : (participant as any).name;
+          this.participantsService.createIfNotExists(participantName);
         }
+        this.checkConflicts();
+      });
+
+    this.form.controls.start.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.checkConflicts();
+      });
+
+    this.form.controls.end.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.checkConflicts();
       });
 
     if (this.modalData.type === 'add') {
@@ -122,6 +142,12 @@ export class TaskModalComponent implements OnInit {
     }
 
     this.columnTitle.nativeElement.focus();
+
+    // Initialize participants list
+    this.updateParticipantsWithConflictInfo();
+
+    // Check for conflicts on modal open
+    this.checkConflicts();
   }
   closeModal() {
     this.activeModal.close();
@@ -170,5 +196,92 @@ export class TaskModalComponent implements OnInit {
     });
 
     this.activeModal.close();
+  }
+
+  checkConflicts(): void {
+    const startValue = this.form.controls.start.value;
+    const endValue = this.form.controls.end.value;
+
+    this.conflictedParticipants.clear();
+
+    if (!startValue || !endValue) {
+      return;
+    }
+
+    const [startHour, startMinute] = startValue.split(':').map(Number);
+    const [endHour, endMinute] = endValue.split(':').map(Number);
+
+    if (
+      isNaN(startHour) ||
+      isNaN(startMinute) ||
+      isNaN(endHour) ||
+      isNaN(endMinute)
+    ) {
+      return;
+    }
+
+    const start = new Date();
+    start.setHours(startHour, startMinute, 0, 0);
+
+    const end = new Date();
+    end.setHours(endHour, endMinute, 0, 0);
+
+    if (isBefore(end, start)) {
+      return;
+    }
+
+    const currentTaskId = this.modalData.task.id;
+
+    // Get all participants from the service to check against all of them
+    const allParticipants = this.participantsService.participants;
+
+    for (const participant of allParticipants) {
+      const participantName = participant.name;
+      const hasConflict = this.tasksService.tasks.some((task) => {
+        // Skip the current task when editing
+        if (task.id === currentTaskId) {
+          return false;
+        }
+
+        // Check if this task has the participant
+        if (!task.participants.includes(participantName)) {
+          return false;
+        }
+
+        // Check if time intervals overlap
+        return areIntervalsOverlapping(
+          { start, end },
+          { start: task.start, end: task.end },
+          { inclusive: false }
+        );
+      });
+
+      if (hasConflict) {
+        this.conflictedParticipants.add(participantName);
+      }
+    }
+
+    // Update participants list with conflict info
+    this.updateParticipantsWithConflictInfo();
+  }
+
+  updateParticipantsWithConflictInfo(): void {
+    const participants = this.participantsService.participants;
+    this.participantsWithConflictInfo = participants.map(p => ({
+      name: p.name,
+      isConflicted: this.conflictedParticipants.has(p.name),
+      displayName: this.conflictedParticipants.has(p.name) ? `⚠️ ${p.name}` : p.name
+    }));
+  }
+
+  isParticipantConflicted(participant: string): boolean {
+    return this.conflictedParticipants.has(participant);
+  }
+
+  getParticipantName(item: any): string {
+    if (typeof item === 'string') {
+      return item;
+    }
+    return item?.name || item;
   }
 }

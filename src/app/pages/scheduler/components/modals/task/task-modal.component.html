@@ -48,19 +48,30 @@
       <label for="participants" class="text-gray-400">Participants</label>
       <ng-select
         id="participants"
-        [items]="participantsService.participants$ | async"
+        [items]="participantsWithConflictInfo"
         [multiple]="true"
         [closeOnSelect]="false"
         bindLabel="name"
         bindValue="name"
         placeholder="Select or create participants"
         formControlName="participants"
-        searchable="true"
+        [searchable]="true"
         dropdownPosition="bottom"
         [hideSelected]="true"
         [addTag]="true"
         [clearSearchOnAdd]="true"
       >
+        <ng-template ng-option-tmp let-item="item" let-search="searchTerm">
+          <div [style.color]="item.isConflicted ? 'red' : 'black'" [style.font-weight]="item.isConflicted ? 'bold' : 'normal'">
+            {{ item.isConflicted ? '⚠️ ' : '' }}{{ item.name }}
+          </div>
+        </ng-template>
+        <ng-template ng-label-tmp let-item="item" let-clear="clear">
+          <span class="ng-value-label" [style.color]="isParticipantConflicted(getParticipantName(item)) ? 'red' : 'black'" [style.font-weight]="isParticipantConflicted(getParticipantName(item)) ? 'bold' : 'normal'">
+            {{ isParticipantConflicted(getParticipantName(item)) ? '⚠️ ' : '' }}{{ getParticipantName(item) }}
+          </span>
+          <span class="ng-value-icon right" (click)="clear(item)" aria-hidden="true">×</span>
+        </ng-template>
       </ng-select>
     </div>
 
