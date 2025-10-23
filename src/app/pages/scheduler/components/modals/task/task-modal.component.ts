@@ -80,10 +80,14 @@ export class TaskModalComponent implements OnInit {
   });
 
   conflictedParticipants = new Set<string>();
-  participantsWithConflictInfo: Array<{name: string, isConflicted: boolean, displayName: string}> = [];
+  participantsWithConflictInfo: {
+    name: string;
+    isConflicted: boolean;
+    displayName: string;
+  }[] = [];
 
   constructor(
-    private activeModal: NgbActiveModal,
+    private readonly activeModal: NgbActiveModal,
     private readonly destroyRef: DestroyRef,
     readonly participantsService: ParticipantsService,
     private readonly tasksService: TasksService
@@ -93,7 +97,10 @@ export class TaskModalComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((participants) => {
         for (const participant of participants) {
-          const participantName = typeof participant === 'string' ? participant : (participant as any).name;
+          const participantName =
+            typeof participant === 'string'
+              ? participant
+              : (participant as any).name;
           this.participantsService.createIfNotExists(participantName);
         }
         this.checkConflicts();
@@ -143,10 +150,8 @@ export class TaskModalComponent implements OnInit {
 
     this.columnTitle.nativeElement.focus();
 
-    // Initialize participants list
     this.updateParticipantsWithConflictInfo();
 
-    // Check for conflicts on modal open
     this.checkConflicts();
   }
   closeModal() {
@@ -232,28 +237,29 @@ export class TaskModalComponent implements OnInit {
 
     const currentTaskId = this.modalData.task.id;
 
-    // Get all participants from the service to check against all of them
     const allParticipants = this.participantsService.participants;
 
     for (const participant of allParticipants) {
       const participantName = participant.name;
       const hasConflict = this.tasksService.tasks.some((task) => {
-        // Skip the current task when editing
         if (task.id === currentTaskId) {
           return false;
         }
 
-        // Check if this task has the participant
         if (!task.participants.includes(participantName)) {
           return false;
         }
 
-        // Check if time intervals overlap
-        return areIntervalsOverlapping(
-          { start, end },
-          { start: task.start, end: task.end },
-          { inclusive: false }
-        );
+        const taskStartTime =
+          task.start.getHours() * 60 + task.start.getMinutes();
+        const taskEndTime = task.end.getHours() * 60 + task.end.getMinutes();
+        const newStartTime = start.getHours() * 60 + start.getMinutes();
+        const newEndTime = end.getHours() * 60 + end.getMinutes();
+
+        const overlaps =
+          taskStartTime < newEndTime && newStartTime < taskEndTime;
+
+        return overlaps;
       });
 
       if (hasConflict) {
@@ -261,16 +267,17 @@ export class TaskModalComponent implements OnInit {
       }
     }
 
-    // Update participants list with conflict info
     this.updateParticipantsWithConflictInfo();
   }
 
   updateParticipantsWithConflictInfo(): void {
     const participants = this.participantsService.participants;
-    this.participantsWithConflictInfo = participants.map(p => ({
+    this.participantsWithConflictInfo = participants.map((p) => ({
       name: p.name,
       isConflicted: this.conflictedParticipants.has(p.name),
-      displayName: this.conflictedParticipants.has(p.name) ? `⚠️ ${p.name}` : p.name
+      displayName: this.conflictedParticipants.has(p.name)
+        ? `⚠️ ${p.name}`
+        : p.name,
     }));
   }
 
