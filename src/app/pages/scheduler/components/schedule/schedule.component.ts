@@ -133,8 +133,8 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
               primary: task.color.primary,
               secondary: task.color.secondary,
             },
-            // On mobile, start with draggable false - enable after long press
-            draggable: this.isMobile ? false : task.draggable,
+            // Keep draggable enabled, we'll control it via CSS and event handling
+            draggable: task.draggable,
             resizable: this.isMobile ? { beforeStart: false, afterEnd: false } : task.resizable,
             participants: task.participants,
             columnId: task.columnId,
@@ -180,10 +180,6 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    // CRITICAL: Prevent the calendar library from starting its drag
-    event.preventDefault();
-    event.stopPropagation();
-
     // Get the event ID from the element
     const eventId = this.getEventIdFromElement(calEvent);
     if (!eventId) {
@@ -194,24 +190,26 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
     this.touchStartY = event.touches[0].clientY;
     this.currentTouchEventId = eventId;
 
+    // Prevent default to stop immediate drag
+    event.preventDefault();
+    event.stopPropagation();
+
     // Add visual feedback
     calEvent.classList.add('long-press-waiting');
 
     // Start long press timer
     this.longPressTimer = setTimeout(() => {
-      // Enable dragging for this event
-      this.enableDraggingForEvent(eventId);
       calEvent.classList.remove('long-press-waiting');
-      calEvent.classList.add('long-press-active');
+      calEvent.classList.add('long-press-active', 'drag-enabled');
 
       // Haptic feedback
       if ('vibrate' in navigator) {
         navigator.vibrate(50);
       }
 
-      // Simulate a mousedown to trigger the calendar's drag
-      // This is needed because we prevented the original touch event
-      this.simulateCalendarDrag(calEvent as HTMLElement, event);
+      // Now that long press is complete, re-dispatch the touch event
+      // so the calendar library can handle it
+      this.triggerDragStart(calEvent as HTMLElement, event);
     }, this.LONG_PRESS_DELAY);
   }
 
@@ -228,6 +226,12 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
       return;
     }
 
+    // Check if this event is drag-enabled
+    if (calEvent.classList.contains('drag-enabled')) {
+      // Allow the move - don't prevent default
+      return;
+    }
+
     const deltaX = Math.abs(event.touches[0].clientX - this.touchStartX);
     const deltaY = Math.abs(event.touches[0].clientY - this.touchStartY);
 
@@ -235,17 +239,15 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
     if ((deltaX > this.MOVE_THRESHOLD || deltaY > this.MOVE_THRESHOLD) && this.longPressTimer) {
       // Cancel long press and allow scrolling
       this.cancelLongPress();
-      const target = event.target as HTMLElement;
-      const calEvent = target.closest('.cal-event');
       if (calEvent) {
         calEvent.classList.remove('long-press-waiting', 'long-press-active');
       }
       this.currentTouchEventId = null;
-      // Don't prevent default here - allow scrolling
+      // Don't prevent default - allow scrolling
       return;
     }
 
-    // If long press hasn't completed yet, prevent default to avoid unwanted behavior
+    // If long press hasn't completed yet, prevent movement
     if (this.longPressTimer) {
       event.preventDefault();
       event.stopPropagation();
@@ -257,23 +259,15 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
     const target = event.target as HTMLElement;
     const calEvent = target.closest('.cal-event');
     if (calEvent) {
-      calEvent.classList.remove('long-press-waiting', 'long-press-active');
+      calEvent.classList.remove('long-press-waiting', 'long-press-active', 'drag-enabled');
     }
 
     // If long press wasn't completed, cancel it
     if (this.longPressTimer) {
       this.cancelLongPress();
-      // This was a tap, not a long press - allow the click event
-      // Don't prevent default here to allow tap to open modal
     }
 
-    // Reset dragging state after a short delay
-    setTimeout(() => {
-      if (this.currentTouchEventId) {
-        this.disableDraggingForEvent(this.currentTouchEventId);
-      }
-      this.currentTouchEventId = null;
-    }, 100);
+    this.currentTouchEventId = null;
   }
 
   private onTouchCancel(event: TouchEvent): void {
@@ -282,33 +276,37 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
     const target = event.target as HTMLElement;
     const calEvent = target.closest('.cal-event');
     if (calEvent) {
-      calEvent.classList.remove('long-press-waiting', 'long-press-active');
+      calEvent.classList.remove('long-press-waiting', 'long-press-active', 'drag-enabled');
     }
 
-    if (this.currentTouchEventId) {
-      this.disableDraggingForEvent(this.currentTouchEventId);
-      this.currentTouchEventId = null;
-    }
+    this.currentTouchEventId = null;
   }
 
-  private simulateCalendarDrag(element: HTMLElement, originalTouchEvent: TouchEvent): void {
-    // After enabling draggable, we need to let the calendar know to start dragging
-    // The calendar library likely uses mousedown/mousemove for dragging
-    // So we'll dispatch those events after the long press
+  private triggerDragStart(element: HTMLElement, originalEvent: TouchEvent): void {
+    // Remove our event listeners temporarily to avoid re-capturing
+    const hostElement = this.elementRef.nativeElement;
 
-    const touch = originalTouchEvent.touches[0];
+    // Remove capture listeners
+    hostElement.removeEventListener('touchstart', this.onTouchStart.bind(this), true);
+    hostElement.removeEventListener('touchmove', this.onTouchMove.bind(this), true);
 
-    // Create synthetic mouse event
-    const mouseEvent = new MouseEvent('mousedown', {
+    // Create a new touch event that the calendar can process
+    const touch = originalEvent.touches[0];
+    const newTouchStart = new TouchEvent('touchstart', {
       bubbles: true,
       cancelable: true,
-      clientX: touch.clientX,
-      clientY: touch.clientY,
-      button: 0,
+      touches: [touch],
+      targetTouches: [touch],
+      changedTouches: [touch],
     });
 
-    // Dispatch to the element
-    element.dispatchEvent(mouseEvent);
+    // Dispatch to the element so calendar library can handle it
+    element.dispatchEvent(newTouchStart);
+
+    // Re-setup listeners after a brief moment
+    setTimeout(() => {
+      this.setupLongPressDrag();
+    }, 100);
   }
 
   private cancelLongPress(): void {
@@ -335,30 +333,6 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
     }
 
     return null;
-  }
-
-  private enableDraggingForEvent(eventId: string): void {
-    const taskIndex = this.tasks.findIndex(t => t.id === eventId);
-    if (taskIndex !== -1) {
-      this.tasks[taskIndex] = {
-        ...this.tasks[taskIndex],
-        draggable: true,
-      };
-      this.refresh.next();
-      this.cdr.detectChanges();
-    }
-  }
-
-  private disableDraggingForEvent(eventId: string): void {
-    const taskIndex = this.tasks.findIndex(t => t.id === eventId);
-    if (taskIndex !== -1) {
-      this.tasks[taskIndex] = {
-        ...this.tasks[taskIndex],
-        draggable: false,
-      };
-      this.refresh.next();
-      this.cdr.detectChanges();
-    }
   }
 
   eventTimesChanged({
