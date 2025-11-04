@@ -31,6 +31,21 @@
     cursor: pointer;
     -webkit-user-select: none;
     user-select: none;
+    transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  // Visual feedback while waiting for long press
+  ::ng-deep .cal-event.long-press-waiting {
+    opacity: 0.8;
+    transform: scale(0.98);
+  }
+
+  // Visual feedback when long press is activated
+  ::ng-deep .cal-event.long-press-active {
+    opacity: 1;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
   }
 
   // Hide resize handles on mobile (visual feedback that resizing is disabled)
