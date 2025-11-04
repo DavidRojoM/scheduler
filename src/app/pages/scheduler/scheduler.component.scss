@@ -20,3 +20,28 @@
 .cdk-drag-placeholder {
   opacity: 0;
 }
+
+// Mobile touch improvements
+.touch-pan-x {
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+}
+
+@media (max-width: 768px) {
+  // Improve scrolling on mobile
+  main {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  // Ensure columns remain draggable on mobile with longer delay
+  .cdk-drag {
+    touch-action: none;
+  }
+
+  // Reduce column width on mobile for better viewing
+  .flex.flex-col.divide-y {
+    width: 90vw !important;
+    min-width: 90vw !important;
+  }
+}

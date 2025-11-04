@@ -1,20 +1,22 @@
-<mwl-calendar-day-view
-  [viewDate]="viewDate"
-  [events]="tasks"
-  (eventClicked)="handleEvent('task', $event.event)"
-  (eventTimesChanged)="eventTimesChanged($event)"
-  (hourSegmentClicked)="handleEvent('segment', $any($event))"
-  [dayStartHour]="6"
-  [dayEndHour]="21"
-  [hourSegments]="hourSegments"
-  [minimumEventHeight]="60 / hourSegments"
-  locale="es"
-  [currentTimeMarkerTemplate]="marker"
-  [refresh]="refresh"
-  [eventTemplate]="eventTemplate"
-  [tooltipTemplate]="tooltipTemplate"
->
-</mwl-calendar-day-view>
+<div [class.mobile-calendar]="isMobile">
+  <mwl-calendar-day-view
+    [viewDate]="viewDate"
+    [events]="tasks"
+    (eventClicked)="handleEvent('task', $event.event)"
+    (eventTimesChanged)="eventTimesChanged($event)"
+    (hourSegmentClicked)="handleEvent('segment', $any($event))"
+    [dayStartHour]="6"
+    [dayEndHour]="21"
+    [hourSegments]="hourSegments"
+    [minimumEventHeight]="60 / hourSegments"
+    locale="es"
+    [currentTimeMarkerTemplate]="marker"
+    [refresh]="refresh"
+    [eventTemplate]="eventTemplate"
+    [tooltipTemplate]="tooltipTemplate"
+  >
+  </mwl-calendar-day-view>
+</div>
 <ng-template #marker></ng-template>
 <ng-template #eventTitleTemplate let-event="event" let-view="view">
   <article class="flex flex-col justify-between h-full">

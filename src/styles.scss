@@ -35,3 +35,41 @@
   border-radius: 10px;
   border: 1px solid #ffffff;
 }
+
+/* Mobile touch improvements */
+@media (max-width: 768px) {
+  /* Enable smooth scrolling on mobile */
+  html,
+  body {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  /* Improve calendar touch handling on mobile */
+  .cal-day-view {
+    touch-action: pan-y pan-x;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Allow scrolling while dragging */
+  .cal-time-events {
+    touch-action: pan-y pan-x;
+  }
+
+  /* Ensure events can be dragged with long press */
+  .cal-event {
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Improve column dragging on mobile */
+  .cdk-drag {
+    touch-action: none;
+  }
+
+  /* Hide resize handles on mobile */
+  .cal-resize-handle {
+    display: none !important;
+  }
+}

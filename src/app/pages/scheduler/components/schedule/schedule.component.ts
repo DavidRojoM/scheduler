@@ -19,6 +19,7 @@ import { SharedModule } from '../../../../shared/shared.module';
 import { TaskModalComponent } from '../modals/task/task-modal.component';
 import { v4 } from 'uuid';
 import { TasksService } from '../../../../shared/services/tasks.service';
+import { MobileDetectionService } from '../../../../shared/services/mobile-detection.service';
 import {
   TASK_COLORS,
   DAY_END_HOUR,
@@ -94,10 +95,15 @@ export class ScheduleComponent implements OnInit {
 
   activeDayIsOpen: boolean = true;
 
+  get isMobile(): boolean {
+    return this.mobileDetectionService.isMobile;
+  }
+
   constructor(
     private modal: NgbModal,
     private readonly tasksService: TasksService,
-    private readonly destroyRef: DestroyRef
+    private readonly destroyRef: DestroyRef,
+    private readonly mobileDetectionService: MobileDetectionService
   ) {}
   ngOnInit(): void {
     this.tasksService.tasks$
@@ -115,7 +121,7 @@ export class ScheduleComponent implements OnInit {
               secondary: task.color.secondary,
             },
             draggable: task.draggable,
-            resizable: task.resizable,
+            resizable: this.isMobile ? { beforeStart: false, afterEnd: false } : task.resizable,
             participants: task.participants,
             columnId: task.columnId,
           }));
@@ -142,7 +148,10 @@ export class ScheduleComponent implements OnInit {
           participants: iEvent.participants,
           color: TASK_COLORS.red,
           draggable: true,
-          resizable: {
+          resizable: this.isMobile ? {
+            afterEnd: false,
+            beforeStart: false,
+          } : {
             afterEnd: true,
             beforeStart: true,
           },
@@ -158,7 +167,10 @@ export class ScheduleComponent implements OnInit {
         participants: iEvent.participants,
         color: TASK_COLORS.red,
         draggable: true,
-        resizable: {
+        resizable: this.isMobile ? {
+          afterEnd: false,
+          beforeStart: false,
+        } : {
           afterEnd: true,
           beforeStart: true,
         },
@@ -222,7 +234,10 @@ export class ScheduleComponent implements OnInit {
       participants: task.participants,
       color: TASK_COLORS.red,
       draggable: true,
-      resizable: {
+      resizable: this.isMobile ? {
+        afterEnd: false,
+        beforeStart: false,
+      } : {
         afterEnd: true,
         beforeStart: true,
       },
@@ -241,7 +256,10 @@ export class ScheduleComponent implements OnInit {
       participants: task.participants,
       color: TASK_COLORS.red,
       draggable: true,
-      resizable: {
+      resizable: this.isMobile ? {
+        afterEnd: false,
+        beforeStart: false,
+      } : {
         afterEnd: true,
         beforeStart: true,
       },
