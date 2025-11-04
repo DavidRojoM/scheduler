@@ -6,6 +6,9 @@ import {
   input,
   DestroyRef,
   OnInit,
+  ElementRef,
+  AfterViewInit,
+  ChangeDetectorRef,
 } from '@angular/core';
 import { Subject } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -74,7 +77,7 @@ interface Task {
   standalone: true,
   imports: [SharedModule],
 })
-export class ScheduleComponent implements OnInit {
+export class ScheduleComponent implements OnInit, AfterViewInit {
   @ViewChild('modalContent', { static: true }) modalContent!: TemplateRef<any>;
 
   hourSegments = SEGMENTS_BY_HOUR;
@@ -95,6 +98,14 @@ export class ScheduleComponent implements OnInit {
 
   activeDayIsOpen: boolean = true;
 
+  // Long press state for mobile
+  private longPressTimer: any;
+  private touchStartX = 0;
+  private touchStartY = 0;
+  private readonly LONG_PRESS_DELAY = 500; // 500ms
+  private readonly MOVE_THRESHOLD = 10; // 10px
+  private currentTouchEventId: string | null = null;
+
   get isMobile(): boolean {
     return this.mobileDetectionService.isMobile;
   }
@@ -103,7 +114,9 @@ export class ScheduleComponent implements OnInit {
     private modal: NgbModal,
     private readonly tasksService: TasksService,
     private readonly destroyRef: DestroyRef,
-    private readonly mobileDetectionService: MobileDetectionService
+    private readonly mobileDetectionService: MobileDetectionService,
+    private readonly elementRef: ElementRef,
+    private readonly cdr: ChangeDetectorRef
   ) {}
   ngOnInit(): void {
     this.tasksService.tasks$
@@ -120,7 +133,8 @@ export class ScheduleComponent implements OnInit {
               primary: task.color.primary,
               secondary: task.color.secondary,
             },
-            draggable: task.draggable,
+            // On mobile, start with draggable false - enable after long press
+            draggable: this.isMobile ? false : task.draggable,
             resizable: this.isMobile ? { beforeStart: false, afterEnd: false } : task.resizable,
             participants: task.participants,
             columnId: task.columnId,
@@ -128,6 +142,157 @@ export class ScheduleComponent implements OnInit {
 
         this.refresh.next();
       });
+  }
+
+  ngAfterViewInit(): void {
+    if (this.isMobile) {
+      this.setupLongPressDrag();
+    }
+  }
+
+  private setupLongPressDrag(): void {
+    const element = this.elementRef.nativeElement;
+
+    element.addEventListener('touchstart', this.onTouchStart.bind(this), { passive: false });
+    element.addEventListener('touchmove', this.onTouchMove.bind(this), { passive: false });
+    element.addEventListener('touchend', this.onTouchEnd.bind(this), { passive: false });
+    element.addEventListener('touchcancel', this.onTouchCancel.bind(this), { passive: false });
+  }
+
+  private onTouchStart(event: TouchEvent): void {
+    const target = event.target as HTMLElement;
+    const calEvent = target.closest('.cal-event');
+
+    if (!calEvent) {
+      return;
+    }
+
+    // Get the event ID from the element
+    const eventId = this.getEventIdFromElement(calEvent);
+    if (!eventId) {
+      return;
+    }
+
+    this.touchStartX = event.touches[0].clientX;
+    this.touchStartY = event.touches[0].clientY;
+    this.currentTouchEventId = eventId;
+
+    // Add visual feedback
+    calEvent.classList.add('long-press-waiting');
+
+    // Start long press timer
+    this.longPressTimer = setTimeout(() => {
+      // Enable dragging for this event
+      this.enableDraggingForEvent(eventId);
+      calEvent.classList.remove('long-press-waiting');
+      calEvent.classList.add('long-press-active');
+
+      // Haptic feedback
+      if ('vibrate' in navigator) {
+        navigator.vibrate(50);
+      }
+    }, this.LONG_PRESS_DELAY);
+  }
+
+  private onTouchMove(event: TouchEvent): void {
+    if (!this.currentTouchEventId || !event.touches.length) {
+      return;
+    }
+
+    const deltaX = Math.abs(event.touches[0].clientX - this.touchStartX);
+    const deltaY = Math.abs(event.touches[0].clientY - this.touchStartY);
+
+    // If user moved beyond threshold before long press completed, cancel it
+    if ((deltaX > this.MOVE_THRESHOLD || deltaY > this.MOVE_THRESHOLD) && this.longPressTimer) {
+      this.cancelLongPress();
+    }
+  }
+
+  private onTouchEnd(event: TouchEvent): void {
+    // Clean up visual feedback
+    const target = event.target as HTMLElement;
+    const calEvent = target.closest('.cal-event');
+    if (calEvent) {
+      calEvent.classList.remove('long-press-waiting', 'long-press-active');
+    }
+
+    // If long press wasn't completed, cancel it
+    if (this.longPressTimer) {
+      this.cancelLongPress();
+    }
+
+    // Reset dragging state after a short delay
+    setTimeout(() => {
+      if (this.currentTouchEventId) {
+        this.disableDraggingForEvent(this.currentTouchEventId);
+      }
+      this.currentTouchEventId = null;
+    }, 100);
+  }
+
+  private onTouchCancel(event: TouchEvent): void {
+    this.cancelLongPress();
+
+    const target = event.target as HTMLElement;
+    const calEvent = target.closest('.cal-event');
+    if (calEvent) {
+      calEvent.classList.remove('long-press-waiting', 'long-press-active');
+    }
+
+    if (this.currentTouchEventId) {
+      this.disableDraggingForEvent(this.currentTouchEventId);
+      this.currentTouchEventId = null;
+    }
+  }
+
+  private cancelLongPress(): void {
+    if (this.longPressTimer) {
+      clearTimeout(this.longPressTimer);
+      this.longPressTimer = null;
+    }
+  }
+
+  private getEventIdFromElement(element: Element): string | null {
+    // Try to find the event ID from the calendar event element
+    const eventElement = element.closest('.cal-event');
+    if (!eventElement) {
+      return null;
+    }
+
+    // The calendar library adds data attributes or we can find it from the task title
+    // Let's search through our tasks to match
+    const titleElement = eventElement.querySelector('.cal-event-title');
+    if (titleElement) {
+      const title = titleElement.textContent?.trim();
+      const matchingTask = this.tasks.find(t => t.title === title);
+      return matchingTask?.id as string || null;
+    }
+
+    return null;
+  }
+
+  private enableDraggingForEvent(eventId: string): void {
+    const taskIndex = this.tasks.findIndex(t => t.id === eventId);
+    if (taskIndex !== -1) {
+      this.tasks[taskIndex] = {
+        ...this.tasks[taskIndex],
+        draggable: true,
+      };
+      this.refresh.next();
+      this.cdr.detectChanges();
+    }
+  }
+
+  private disableDraggingForEvent(eventId: string): void {
+    const taskIndex = this.tasks.findIndex(t => t.id === eventId);
+    if (taskIndex !== -1) {
+      this.tasks[taskIndex] = {
+        ...this.tasks[taskIndex],
+        draggable: false,
+      };
+      this.refresh.next();
+      this.cdr.detectChanges();
+    }
   }
 
   eventTimesChanged({
