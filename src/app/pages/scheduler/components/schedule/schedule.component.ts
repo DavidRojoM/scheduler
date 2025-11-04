@@ -203,9 +203,12 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
 
     // Get the event ID
     const eventId = this.getEventIdFromElement(calEvent);
+    console.log('Event ID from element:', eventId);
     if (!eventId) {
+      console.log('❌ No event ID found - exiting early');
       return;
     }
+    console.log('✅ Event ID found, proceeding with long press setup');
 
     const touch = event.touches[0];
     this.touchStartX = touch.clientX;
@@ -422,21 +425,31 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
   }
 
   private getEventIdFromElement(element: Element): string | null {
+    console.log('Getting event ID from element:', element);
+
     // Try to find the event ID from the calendar event element
     const eventElement = element.closest('.cal-event');
+    console.log('Found cal-event element:', eventElement);
     if (!eventElement) {
+      console.log('No cal-event element found');
       return null;
     }
 
     // The calendar library adds data attributes or we can find it from the task title
     // Let's search through our tasks to match
     const titleElement = eventElement.querySelector('.cal-event-title');
+    console.log('Found title element:', titleElement);
+
     if (titleElement) {
       const title = titleElement.textContent?.trim();
+      console.log('Event title:', title);
+      console.log('Available tasks:', this.tasks.map(t => ({ id: t.id, title: t.title })));
       const matchingTask = this.tasks.find(t => t.title === title);
+      console.log('Matching task:', matchingTask);
       return matchingTask?.id as string || null;
     }
 
+    console.log('No title element found');
     return null;
   }
 
