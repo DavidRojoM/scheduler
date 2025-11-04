@@ -24,14 +24,19 @@
     overflow-x: hidden;
   }
 
-  // Events should be draggable with long press
-  // touch-action: none allows the drag handler to take over after long press
+  // CRITICAL: Block all pointer events on calendar events by default on mobile
+  // This prevents the calendar library from handling touches until long-press
   ::ng-deep .cal-event {
-    touch-action: none;
+    pointer-events: none !important;
     cursor: pointer;
     -webkit-user-select: none;
     user-select: none;
     transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  // Allow child elements to receive events for clicking, but not dragging
+  ::ng-deep .cal-event * {
+    pointer-events: none !important;
   }
 
   // Visual feedback while waiting for long press
@@ -40,12 +45,22 @@
     transform: scale(0.98);
   }
 
-  // Visual feedback when long press is activated
+  // Visual feedback when long press is activated - NOW allow dragging
   ::ng-deep .cal-event.long-press-active {
     opacity: 1;
     transform: scale(1.05);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     z-index: 1000;
+    pointer-events: auto !important; // Re-enable pointer events for dragging
+  }
+
+  // When drag is enabled, allow all interactions
+  ::ng-deep .cal-event.drag-enabled {
+    pointer-events: auto !important;
+  }
+
+  ::ng-deep .cal-event.drag-enabled * {
+    pointer-events: auto !important;
   }
 
   // Hide resize handles on mobile (visual feedback that resizing is disabled)
