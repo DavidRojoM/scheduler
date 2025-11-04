@@ -153,28 +153,36 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
   private setupLongPressDrag(): void {
     const element = this.elementRef.nativeElement;
 
-    // Use capture phase to intercept events before the calendar library
+    // Listen on the wrapper (which has pointer-events enabled)
+    // Since cal-events have pointer-events: none, we need to detect touches on the wrapper
     element.addEventListener('touchstart', this.onTouchStart.bind(this), {
       passive: false,
-      capture: true
     });
     element.addEventListener('touchmove', this.onTouchMove.bind(this), {
       passive: false,
-      capture: true
     });
     element.addEventListener('touchend', this.onTouchEnd.bind(this), {
       passive: false,
-      capture: true
     });
     element.addEventListener('touchcancel', this.onTouchCancel.bind(this), {
       passive: false,
-      capture: true
     });
   }
 
   private onTouchStart(event: TouchEvent): void {
-    const target = event.target as HTMLElement;
-    const calEvent = target.closest('.cal-event');
+    // Get the element at the touch point
+    const touch = event.touches[0];
+    const x = touch.clientX;
+    const y = touch.clientY;
+
+    // Find the element at this position
+    const elementAtPoint = document.elementFromPoint(x, y);
+    if (!elementAtPoint) {
+      return;
+    }
+
+    // Check if we touched a calendar event (or its child)
+    const calEvent = elementAtPoint.closest('.cal-event') as HTMLElement;
 
     if (!calEvent) {
       return;
@@ -186,13 +194,9 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    this.touchStartX = event.touches[0].clientX;
-    this.touchStartY = event.touches[0].clientY;
+    this.touchStartX = x;
+    this.touchStartY = y;
     this.currentTouchEventId = eventId;
-
-    // Prevent default to stop immediate drag
-    event.preventDefault();
-    event.stopPropagation();
 
     // Add visual feedback
     calEvent.classList.add('long-press-waiting');
@@ -207,59 +211,45 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
         navigator.vibrate(50);
       }
 
-      // Now that long press is complete, re-dispatch the touch event
-      // so the calendar library can handle it
-      this.triggerDragStart(calEvent as HTMLElement, event);
+      // Now pointer-events: auto is enabled via CSS
+      // Dispatch a new touchstart to the element so calendar library can pick it up
+      this.triggerDragStart(calEvent, touch);
     }, this.LONG_PRESS_DELAY);
   }
 
   private onTouchMove(event: TouchEvent): void {
-    if (!event.touches.length) {
+    if (!event.touches.length || !this.currentTouchEventId) {
       return;
     }
 
-    const target = event.target as HTMLElement;
-    const calEvent = target.closest('.cal-event');
-
-    // If we're not touching an event, allow normal scrolling
-    if (!calEvent) {
-      return;
-    }
-
-    // Check if this event is drag-enabled
-    if (calEvent.classList.contains('drag-enabled')) {
-      // Allow the move - don't prevent default
-      return;
-    }
-
-    const deltaX = Math.abs(event.touches[0].clientX - this.touchStartX);
-    const deltaY = Math.abs(event.touches[0].clientY - this.touchStartY);
+    const touch = event.touches[0];
+    const deltaX = Math.abs(touch.clientX - this.touchStartX);
+    const deltaY = Math.abs(touch.clientY - this.touchStartY);
 
     // If user moved beyond threshold before long press completed
     if ((deltaX > this.MOVE_THRESHOLD || deltaY > this.MOVE_THRESHOLD) && this.longPressTimer) {
       // Cancel long press and allow scrolling
       this.cancelLongPress();
-      if (calEvent) {
-        calEvent.classList.remove('long-press-waiting', 'long-press-active');
-      }
-      this.currentTouchEventId = null;
-      // Don't prevent default - allow scrolling
-      return;
-    }
 
-    // If long press hasn't completed yet, prevent movement
-    if (this.longPressTimer) {
-      event.preventDefault();
-      event.stopPropagation();
+      const elementAtPoint = document.elementFromPoint(touch.clientX, touch.clientY);
+      if (elementAtPoint) {
+        const calEvent = elementAtPoint.closest('.cal-event');
+        if (calEvent) {
+          calEvent.classList.remove('long-press-waiting', 'long-press-active');
+        }
+      }
+
+      this.currentTouchEventId = null;
     }
   }
 
   private onTouchEnd(event: TouchEvent): void {
-    // Clean up visual feedback
-    const target = event.target as HTMLElement;
-    const calEvent = target.closest('.cal-event');
-    if (calEvent) {
-      calEvent.classList.remove('long-press-waiting', 'long-press-active', 'drag-enabled');
+    if (this.currentTouchEventId) {
+      // Find and clean up the event element
+      const allEvents = this.elementRef.nativeElement.querySelectorAll('.cal-event');
+      allEvents.forEach((calEvent: HTMLElement) => {
+        calEvent.classList.remove('long-press-waiting', 'long-press-active', 'drag-enabled');
+      });
     }
 
     // If long press wasn't completed, cancel it
@@ -273,40 +263,43 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
   private onTouchCancel(event: TouchEvent): void {
     this.cancelLongPress();
 
-    const target = event.target as HTMLElement;
-    const calEvent = target.closest('.cal-event');
-    if (calEvent) {
+    // Clean up all events
+    const allEvents = this.elementRef.nativeElement.querySelectorAll('.cal-event');
+    allEvents.forEach((calEvent: HTMLElement) => {
       calEvent.classList.remove('long-press-waiting', 'long-press-active', 'drag-enabled');
-    }
+    });
 
     this.currentTouchEventId = null;
   }
 
-  private triggerDragStart(element: HTMLElement, originalEvent: TouchEvent): void {
-    // Remove our event listeners temporarily to avoid re-capturing
-    const hostElement = this.elementRef.nativeElement;
-
-    // Remove capture listeners
-    hostElement.removeEventListener('touchstart', this.onTouchStart.bind(this), true);
-    hostElement.removeEventListener('touchmove', this.onTouchMove.bind(this), true);
-
-    // Create a new touch event that the calendar can process
-    const touch = originalEvent.touches[0];
-    const newTouchStart = new TouchEvent('touchstart', {
-      bubbles: true,
-      cancelable: true,
-      touches: [touch],
-      targetTouches: [touch],
-      changedTouches: [touch],
+  private triggerDragStart(element: HTMLElement, touch: Touch): void {
+    // Create a synthetic touch event at the same position
+    // Now that pointer-events: auto is set, the calendar library will handle it
+    const touchObj = new Touch({
+      identifier: touch.identifier,
+      target: element,
+      clientX: touch.clientX,
+      clientY: touch.clientY,
+      screenX: touch.screenX,
+      screenY: touch.screenY,
+      pageX: touch.pageX,
+      pageY: touch.pageY,
+      radiusX: touch.radiusX || 0,
+      radiusY: touch.radiusY || 0,
+      rotationAngle: touch.rotationAngle || 0,
+      force: touch.force || 1,
     });
 
-    // Dispatch to the element so calendar library can handle it
-    element.dispatchEvent(newTouchStart);
+    const touchEvent = new TouchEvent('touchstart', {
+      bubbles: true,
+      cancelable: true,
+      touches: [touchObj],
+      targetTouches: [touchObj],
+      changedTouches: [touchObj],
+    });
 
-    // Re-setup listeners after a brief moment
-    setTimeout(() => {
-      this.setupLongPressDrag();
-    }, 100);
+    // Dispatch to the element
+    element.dispatchEvent(touchEvent);
   }
 
   private cancelLongPress(): void {
