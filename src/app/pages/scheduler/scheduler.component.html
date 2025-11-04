@@ -2,20 +2,21 @@
   <div
     class="flex flex-row gap-2 w-full bg-gray-600 p-2 sticky top-0 left-0 z-50"
   >
-    <!-- Burger menu button for mobile -->
+    <!-- Burger menu button (mobile only) -->
     @if (isMobile) {
     <div
       (click)="toggleMobileMenu()"
-      class="grid place-content-center select-none p-4 rounded-full bg-blue-200 hover:bg-blue-300 transition-all h-10 w-fit cursor-pointer md:hidden"
+      class="grid place-content-center select-none p-4 rounded-full bg-blue-200 hover:bg-blue-300 transition-all h-10 w-fit cursor-pointer"
     >
       <i class="ph text-xl" [class.ph-list]="!mobileMenuOpen" [class.ph-x]="mobileMenuOpen"></i>
     </div>
     }
 
-    <!-- Desktop menu buttons (hidden on mobile) -->
-    <div class="flex flex-row gap-2" [class.hidden]="isMobile && !mobileMenuOpen">
+    <!-- Buttons that show in navbar on mobile (hidden in burger menu) -->
+    @if (!isMobile) {
+    <div class="flex flex-row gap-2">
       <div
-        (click)="open(wipeConfirmation); closeMobileMenu()"
+        (click)="open(wipeConfirmation)"
         class="grid place-content-center select-none p-4 rounded-full bg-red-400 hover:bg-red-500 transition-all h-10 w-fit cursor-pointer"
       >
         <div class="flex flex-row gap-2 items-center">
@@ -24,7 +25,7 @@
         </div>
       </div>
       <div
-        (click)="exportAndDownload(); closeMobileMenu()"
+        (click)="exportAndDownload()"
         class="grid place-content-center select-none p-4 rounded-full bg-green-400 hover:bg-green-500 transition-all h-10 w-fit cursor-pointer"
       >
         <div class="flex flex-row gap-2 items-center">
@@ -33,7 +34,7 @@
         </div>
       </div>
       <div
-        (click)="takeScreenshot(); closeMobileMenu()"
+        (click)="takeScreenshot()"
         class="grid place-content-center select-none p-4 rounded-full bg-blue-200 hover:bg-blue-300 transition-all h-10 w-fit cursor-pointer"
       >
         <div class="flex flex-row gap-2 items-center">
@@ -42,7 +43,7 @@
         </div>
       </div>
       <div
-        (click)="updateExportHash(); open(exportModal); closeMobileMenu()"
+        (click)="updateExportHash(); open(exportModal)"
         class="grid place-content-center select-none p-4 rounded-full bg-blue-200 hover:bg-blue-300 transition-all h-10 w-fit cursor-pointer"
       >
         <div class="flex flex-row gap-2 items-center">
@@ -51,7 +52,7 @@
         </div>
       </div>
       <div
-        (click)="open(importModal); closeMobileMenu()"
+        (click)="open(importModal)"
         class="grid place-content-center select-none p-4 rounded-full bg-blue-200 hover:bg-blue-300 transition-all h-10 w-fit cursor-pointer"
       >
         <div class="flex flex-row gap-2 items-center">
@@ -59,14 +60,17 @@
           <span class="hidden md:block">Import</span>
         </div>
       </div>
-      <div
-        (click)="addColumn(); closeMobileMenu()"
-        class="grid place-content-center select-none p-4 rounded-full bg-blue-200 hover:bg-blue-300 transition-all h-10 w-fit cursor-pointer"
-      >
-        <div class="flex flex-row gap-2 items-center">
-          <i class="ph ph-plus"></i>
-          <span class="hidden md:block">Add Column</span>
-        </div>
+    </div>
+    }
+
+    <!-- Add Column button (always visible) -->
+    <div
+      (click)="addColumn()"
+      class="grid place-content-center select-none p-4 rounded-full bg-blue-200 hover:bg-blue-300 transition-all h-10 w-fit cursor-pointer"
+    >
+      <div class="flex flex-row gap-2 items-center">
+        <i class="ph ph-plus"></i>
+        <span class="hidden md:block">Add Column</span>
       </div>
     </div>
   </div>
@@ -109,13 +113,6 @@
       >
         <i class="ph ph-download-simple text-xl"></i>
         <span>Import</span>
-      </button>
-      <button
-        (click)="addColumn(); closeMobileMenu()"
-        class="flex flex-row gap-3 items-center p-3 rounded-md bg-blue-200 hover:bg-blue-300 transition-all"
-      >
-        <i class="ph ph-plus text-xl"></i>
-        <span>Add Column</span>
       </button>
     </div>
   </div>
