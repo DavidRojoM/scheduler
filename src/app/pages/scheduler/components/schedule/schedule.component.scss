@@ -1,0 +1,72 @@
+:host {
+  display: block;
+
+  // Enable smooth scrolling on mobile
+  -webkit-overflow-scrolling: touch;
+
+  // Allow panning and pinch zoom on mobile while enabling drag
+  touch-action: pan-y pan-x;
+}
+
+// Mobile calendar wrapper
+.mobile-calendar {
+  // Allow scrolling in both directions
+  ::ng-deep .cal-day-view {
+    touch-action: pan-y pan-x;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  // Allow scrolling in the time column area on mobile
+  ::ng-deep .cal-time-events {
+    touch-action: pan-y pan-x;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  // Events should be draggable with long press
+  // touch-action: none allows the drag handler to take over after long press
+  ::ng-deep .cal-event {
+    touch-action: none;
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  // Hide resize handles on mobile (visual feedback that resizing is disabled)
+  ::ng-deep .cal-resize-handle {
+    display: none !important;
+  }
+
+  // Improve touch targets on mobile
+  ::ng-deep .cal-event-title {
+    pointer-events: none; // Prevent interference with drag
+  }
+}
+
+// Mobile-specific calendar styles
+@media (max-width: 768px) {
+  // Make calendar day view scrollable
+  ::ng-deep .cal-day-view {
+    touch-action: pan-y pan-x;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  // Allow scrolling in the time column area
+  ::ng-deep .cal-time-events {
+    touch-action: pan-y pan-x;
+    overflow: auto;
+  }
+
+  // Events should be draggable with long press, but allow initial scroll
+  ::ng-deep .cal-event {
+    touch-action: none; // This allows drag after long press
+    cursor: pointer;
+  }
+
+  // Hide resize handles on mobile (visual feedback that resizing is disabled)
+  ::ng-deep .cal-resize-handle {
+    display: none !important;
+  }
+}
