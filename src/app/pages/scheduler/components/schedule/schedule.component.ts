@@ -263,20 +263,23 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
     const deltaX = Math.abs(touch.clientX - this.touchStartX);
     const deltaY = Math.abs(touch.clientY - this.touchStartY);
 
-    console.log('TouchMove - delta:', deltaX, deltaY, 'threshold:', this.MOVE_THRESHOLD);
+    console.log('TouchMove - delta:', deltaX, deltaY, 'threshold:', this.MOVE_THRESHOLD, 'hasTimer:', !!this.longPressTimer);
 
-    // If user moved beyond threshold before long press completed, cancel it
-    if ((deltaX > this.MOVE_THRESHOLD || deltaY > this.MOVE_THRESHOLD) && this.longPressTimer) {
-      console.log('Movement detected, cancelling long press');
-      this.cancelLongPress();
-      calEvent.classList.remove('long-press-waiting', 'long-press-active');
-      this.currentTouchEventId = null;
-      this.isDragEnabled = false;
+    // If user moved beyond threshold before long press completed, cancel it and allow scrolling
+    if (deltaX > this.MOVE_THRESHOLD || deltaY > this.MOVE_THRESHOLD) {
+      if (this.longPressTimer) {
+        console.log('Movement detected - cancelling long press to allow scrolling');
+        this.cancelLongPress();
+        calEvent.classList.remove('long-press-waiting', 'long-press-active');
+        this.currentTouchEventId = null;
+        this.isDragEnabled = false;
+      }
       // Don't prevent - allow scrolling
+      console.log('Allowing scroll');
       return;
     }
 
-    // Long press hasn't completed yet and no significant movement - block
+    // Long press hasn't completed yet and no significant movement - block to prevent any action
     console.log('Blocking touchmove - waiting for long press');
     event.preventDefault();
     event.stopPropagation();
