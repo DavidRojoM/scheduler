@@ -255,17 +255,15 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    // Long press hasn't completed yet - block movement
-    event.preventDefault();
-    event.stopPropagation();
-
-    if (!event.touches.length || !this.currentTouchEventId) {
+    if (!event.touches.length) {
       return;
     }
 
     const touch = event.touches[0];
     const deltaX = Math.abs(touch.clientX - this.touchStartX);
     const deltaY = Math.abs(touch.clientY - this.touchStartY);
+
+    console.log('TouchMove - delta:', deltaX, deltaY, 'threshold:', this.MOVE_THRESHOLD);
 
     // If user moved beyond threshold before long press completed, cancel it
     if ((deltaX > this.MOVE_THRESHOLD || deltaY > this.MOVE_THRESHOLD) && this.longPressTimer) {
@@ -274,11 +272,32 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
       calEvent.classList.remove('long-press-waiting', 'long-press-active');
       this.currentTouchEventId = null;
       this.isDragEnabled = false;
+      // Don't prevent - allow scrolling
+      return;
     }
+
+    // Long press hasn't completed yet and no significant movement - block
+    console.log('Blocking touchmove - waiting for long press');
+    event.preventDefault();
+    event.stopPropagation();
   }
 
   private onTouchEnd(event: TouchEvent): void {
-    console.log('Touch end');
+    console.log('Touch end - isDragEnabled:', this.isDragEnabled, 'hasTimer:', !!this.longPressTimer);
+
+    // If we're in the middle of waiting for long press, DON'T end it yet
+    if (this.longPressTimer && !this.isDragEnabled) {
+      console.log('Still waiting for long press - preventing touchend');
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
+    // If drag is active, allow the touchend through for the calendar
+    if (this.isDragEnabled) {
+      console.log('Drag was active, allowing touchend for calendar');
+      // Don't prevent - let calendar handle it
+    }
 
     // Clean up all events
     const allEvents = this.elementRef.nativeElement.querySelectorAll('.cal-event');
@@ -289,6 +308,7 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
 
     // If long press wasn't completed, cancel it
     if (this.longPressTimer) {
+      console.log('Cancelling long press timer on touchend');
       this.cancelLongPress();
     }
 
