@@ -27,6 +27,35 @@
   touch-action: pan-x pan-y;
 }
 
+// Mobile menu styles
+.mobile-menu-overlay {
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.mobile-menu-content {
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
 @media (max-width: 768px) {
   // Improve scrolling on mobile
   main {
@@ -43,5 +72,10 @@
   .flex.flex-col.divide-y {
     width: 90vw !important;
     min-width: 90vw !important;
+  }
+
+  // Hide desktop button labels on mobile
+  .hidden {
+    display: none !important;
   }
 }

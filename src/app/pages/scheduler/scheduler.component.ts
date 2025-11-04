@@ -32,6 +32,7 @@ import { ParticipantsService } from '../../shared/services/participants.service'
 import { ExportService } from '../../shared/services/export.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfigService } from '../../shared/services/config.service';
+import { MobileDetectionService } from '../../shared/services/mobile-detection.service';
 
 @Component({
   selector: 'sch-scheduler',
@@ -66,6 +67,11 @@ export class SchedulerComponent implements OnInit {
   dropList!: CdkDropList;
 
   exportHash = '';
+  mobileMenuOpen = false;
+
+  get isMobile(): boolean {
+    return this.mobileDetectionService.isMobile;
+  }
 
   constructor(
     private readonly columnsService: ColumnsService,
@@ -74,7 +80,8 @@ export class SchedulerComponent implements OnInit {
     private readonly configService: ConfigService,
     private readonly exportService: ExportService,
     private readonly destroyRef: DestroyRef,
-    private readonly modal: NgbModal
+    private readonly modal: NgbModal,
+    private readonly mobileDetectionService: MobileDetectionService
   ) {}
   ngOnInit(): void {
     this.columnsService.columns$
@@ -224,5 +231,13 @@ export class SchedulerComponent implements OnInit {
 
   async takeScreenshot() {
     await this.exportService.takeScreenshotOfNodeAndDownload('#schedule');
+  }
+
+  toggleMobileMenu() {
+    this.mobileMenuOpen = !this.mobileMenuOpen;
+  }
+
+  closeMobileMenu() {
+    this.mobileMenuOpen = false;
   }
 }
