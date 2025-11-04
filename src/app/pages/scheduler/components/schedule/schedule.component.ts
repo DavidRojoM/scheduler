@@ -105,6 +105,8 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
   private readonly LONG_PRESS_DELAY = 500; // 500ms
   private readonly MOVE_THRESHOLD = 10; // 10px
   private currentTouchEventId: string | null = null;
+  private currentTouchEvent: TouchEvent | null = null;
+  private isDragEnabled = false;
 
   get isMobile(): boolean {
     return this.mobileDetectionService.isMobile;
@@ -183,10 +185,17 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
 
     if (!calEvent) {
       // Not touching an event, allow normal behavior
+      this.isDragEnabled = false;
       return;
     }
 
-    console.log('Touch start on calendar event');
+    // If drag is already enabled (continuing a drag), allow it
+    if (this.isDragEnabled && calEvent.getAttribute('data-drag-allowed') === 'true') {
+      console.log('Drag already enabled, allowing touchstart');
+      return;
+    }
+
+    console.log('Touch start on calendar event - blocking');
 
     // CRITICAL: Stop the event from reaching the calendar library
     event.preventDefault();
@@ -202,6 +211,7 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
     this.touchStartX = touch.clientX;
     this.touchStartY = touch.clientY;
     this.currentTouchEventId = eventId;
+    this.currentTouchEvent = event;
 
     // Add visual feedback
     calEvent.classList.add('long-press-waiting');
@@ -221,6 +231,11 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
 
       // Mark that dragging is now allowed
       calEvent.setAttribute('data-drag-allowed', 'true');
+      this.isDragEnabled = true;
+
+      // Now re-trigger the touch event so calendar can start dragging
+      console.log('Re-triggering touch event for calendar library');
+      this.triggerCalendarDrag(calEvent, event);
     }, this.LONG_PRESS_DELAY);
   }
 
@@ -234,13 +249,13 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
     }
 
     // Check if drag is allowed (long-press completed)
-    if (calEvent.getAttribute('data-drag-allowed') === 'true') {
+    if (this.isDragEnabled && calEvent.getAttribute('data-drag-allowed') === 'true') {
       // Long press completed, allow calendar library to handle drag
-      console.log('Drag allowed - not preventing');
+      console.log('Drag enabled - allowing touchmove');
       return;
     }
 
-    // Long press hasn't completed yet
+    // Long press hasn't completed yet - block movement
     event.preventDefault();
     event.stopPropagation();
 
@@ -258,6 +273,7 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
       this.cancelLongPress();
       calEvent.classList.remove('long-press-waiting', 'long-press-active');
       this.currentTouchEventId = null;
+      this.isDragEnabled = false;
     }
   }
 
@@ -277,6 +293,8 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
     }
 
     this.currentTouchEventId = null;
+    this.currentTouchEvent = null;
+    this.isDragEnabled = false;
   }
 
   private onTouchCancel(event: TouchEvent): void {
@@ -291,6 +309,72 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
     });
 
     this.currentTouchEventId = null;
+    this.currentTouchEvent = null;
+    this.isDragEnabled = false;
+  }
+
+  private triggerCalendarDrag(calEvent: HTMLElement, originalEvent: TouchEvent): void {
+    // We need to simulate the user starting a new touch on this element
+    // The calendar library needs a fresh touchstart to begin its drag
+
+    const touch = originalEvent.touches[0];
+
+    // Create a new touch object
+    const newTouch = new Touch({
+      identifier: Date.now(),
+      target: calEvent,
+      clientX: touch.clientX,
+      clientY: touch.clientY,
+      screenX: touch.screenX,
+      screenY: touch.screenY,
+      pageX: touch.pageX,
+      pageY: touch.pageY,
+      radiusX: 2.5,
+      radiusY: 2.5,
+      rotationAngle: 0,
+      force: 0.5,
+    });
+
+    // Dispatch the new touchstart event
+    const newTouchEvent = new TouchEvent('touchstart', {
+      cancelable: true,
+      bubbles: true,
+      touches: [newTouch],
+      targetTouches: [newTouch],
+      changedTouches: [newTouch],
+    });
+
+    console.log('Dispatching new touchstart to', calEvent);
+    calEvent.dispatchEvent(newTouchEvent);
+
+    // Also dispatch a small touchmove to actually start the drag
+    setTimeout(() => {
+      const moveTouch = new Touch({
+        identifier: Date.now(),
+        target: calEvent,
+        clientX: touch.clientX + 1,
+        clientY: touch.clientY + 1,
+        screenX: touch.screenX + 1,
+        screenY: touch.screenY + 1,
+        pageX: touch.pageX + 1,
+        pageY: touch.pageY + 1,
+        radiusX: 2.5,
+        radiusY: 2.5,
+        rotationAngle: 0,
+        force: 0.5,
+      });
+
+      const moveTouchEvent = new TouchEvent('touchmove', {
+        cancelable: true,
+        bubbles: true,
+        touches: [moveTouch],
+        targetTouches: [moveTouch],
+        changedTouches: [moveTouch],
+      });
+
+      console.log('Dispatching touchmove to initiate drag');
+      calEvent.dispatchEvent(moveTouchEvent);
+    }, 10);
   }
 
   private cancelLongPress(): void {
