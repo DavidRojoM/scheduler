@@ -15,7 +15,7 @@
           <div class="flex-1">
             <div class="font-medium text-gray-900">{{ stat.name }}</div>
             <div class="text-sm text-gray-600">
-              {{ formatTime(stat.totalHours, stat.totalMinutes) }}
+              {{ stat.totalMinutes | formatTime }}
             </div>
           </div>
           <button
