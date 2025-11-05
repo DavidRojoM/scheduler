@@ -59,7 +59,7 @@
 // Sticky column headers
 .sticky-column-header {
   position: sticky;
-  top: 64px; // Account for navbar height
+  top: 0;
   z-index: 10;
 
   // Ensure proper rounding on sticky state
@@ -97,10 +97,5 @@
   // Hide desktop button labels on mobile
   .hidden {
     display: none !important;
-  }
-
-  // Adjust sticky header position for mobile navbar
-  .sticky-column-header {
-    top: 56px; // Smaller navbar on mobile
   }
 }
