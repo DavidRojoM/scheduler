@@ -198,10 +198,10 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    console.log('Touch start on calendar event - blocking');
+    console.log('Touch start on calendar event - blocking calendar library');
 
     // CRITICAL: Stop the event from reaching the calendar library
-    event.preventDefault();
+    // but DON'T preventDefault to allow scrolling gestures to work
     event.stopPropagation();
 
     // Get the event ID
