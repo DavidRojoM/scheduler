@@ -5,10 +5,10 @@ import { SharedModule } from '../../../../../shared/shared.module';
 import { TasksService } from '../../../../../shared/services/tasks.service';
 import { ParticipantsService } from '../../../../../shared/services/participants.service';
 import { take } from 'rxjs';
+import { FormatTimePipe } from '../../../../../shared/pipes/format-time.pipe';
 
 interface ParticipantStats {
   name: string;
-  totalHours: number;
   totalMinutes: number;
 }
 
@@ -17,7 +17,7 @@ interface ParticipantStats {
   templateUrl: './participant-stats-modal.component.html',
   styleUrl: './participant-stats-modal.component.scss',
   standalone: true,
-  imports: [ModalHeaderComponent, SharedModule],
+  imports: [ModalHeaderComponent, SharedModule, FormatTimePipe],
 })
 export class ParticipantStatsModalComponent implements OnInit {
   modalTitle = 'Participant Statistics';
@@ -52,33 +52,12 @@ export class ParticipantStatsModalComponent implements OnInit {
 
       // Convert map to array and sort by total minutes descending
       this.participantStats = Array.from(hoursMap.entries())
-        .map(([name, totalHours]) => {
-          const totalMinutes = Math.round(totalHours * 60);
-          return {
-            name,
-            totalHours: Math.floor(totalHours),
-            totalMinutes,
-          };
-        })
+        .map(([name, totalHours]) => ({
+          name,
+          totalMinutes: Math.round(totalHours * 60),
+        }))
         .sort((a, b) => b.totalMinutes - a.totalMinutes);
     });
-  }
-
-  /**
-   * Format time display as "X hours Y minutes" or just "Y minutes" if less than an hour
-   */
-  formatTime(hours: number, minutes: number): string {
-    const remainingMinutes = minutes % 60;
-
-    if (hours === 0) {
-      return `${remainingMinutes} ${remainingMinutes === 1 ? 'minute' : 'minutes'}`;
-    }
-
-    if (remainingMinutes === 0) {
-      return `${hours} ${hours === 1 ? 'hour' : 'hours'}`;
-    }
-
-    return `${hours} ${hours === 1 ? 'hour' : 'hours'} ${remainingMinutes} ${remainingMinutes === 1 ? 'minute' : 'minutes'}`;
   }
 
   deleteParticipant(participantName: string): void {
