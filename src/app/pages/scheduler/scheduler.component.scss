@@ -56,6 +56,26 @@
   }
 }
 
+// Sticky column headers
+.sticky-column-header {
+  position: sticky;
+  top: 64px; // Account for navbar height
+  z-index: 10;
+
+  // Ensure proper rounding on sticky state
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: inherit;
+    border-radius: inherit;
+    z-index: -1;
+  }
+}
+
 @media (max-width: 768px) {
   // Improve scrolling on mobile
   main {
@@ -77,5 +97,10 @@
   // Hide desktop button labels on mobile
   .hidden {
     display: none !important;
+  }
+
+  // Adjust sticky header position for mobile navbar
+  .sticky-column-header {
+    top: 56px; // Smaller navbar on mobile
   }
 }
