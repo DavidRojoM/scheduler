@@ -15,7 +15,7 @@
           <div class="flex-1">
             <div class="font-medium text-gray-900">{{ stat.name }}</div>
             <div class="text-sm text-gray-600">
-              {{ stat.totalHours }} {{ stat.totalHours === 1 ? 'hour' : 'hours' }}
+              {{ formatTime(stat.totalHours, stat.totalMinutes) }}
             </div>
           </div>
           <button

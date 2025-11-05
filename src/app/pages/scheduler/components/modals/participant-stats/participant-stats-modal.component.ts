@@ -9,6 +9,7 @@ import { take } from 'rxjs';
 interface ParticipantStats {
   name: string;
   totalHours: number;
+  totalMinutes: number;
 }
 
 @Component({
@@ -49,14 +50,35 @@ export class ParticipantStatsModalComponent implements OnInit {
         });
       });
 
-      // Convert map to array and sort by hours descending
+      // Convert map to array and sort by total minutes descending
       this.participantStats = Array.from(hoursMap.entries())
-        .map(([name, totalHours]) => ({
-          name,
-          totalHours: Math.round(totalHours * 100) / 100, // Round to 2 decimal places
-        }))
-        .sort((a, b) => b.totalHours - a.totalHours);
+        .map(([name, totalHours]) => {
+          const totalMinutes = Math.round(totalHours * 60);
+          return {
+            name,
+            totalHours: Math.floor(totalHours),
+            totalMinutes,
+          };
+        })
+        .sort((a, b) => b.totalMinutes - a.totalMinutes);
     });
+  }
+
+  /**
+   * Format time display as "X hours Y minutes" or just "Y minutes" if less than an hour
+   */
+  formatTime(hours: number, minutes: number): string {
+    const remainingMinutes = minutes % 60;
+
+    if (hours === 0) {
+      return `${remainingMinutes} ${remainingMinutes === 1 ? 'minute' : 'minutes'}`;
+    }
+
+    if (remainingMinutes === 0) {
+      return `${hours} ${hours === 1 ? 'hour' : 'hours'}`;
+    }
+
+    return `${hours} ${hours === 1 ? 'hour' : 'hours'} ${remainingMinutes} ${remainingMinutes === 1 ? 'minute' : 'minutes'}`;
   }
 
   deleteParticipant(participantName: string): void {
