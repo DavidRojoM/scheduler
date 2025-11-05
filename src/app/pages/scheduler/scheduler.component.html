@@ -60,6 +60,15 @@
           <span class="hidden md:block">Import</span>
         </div>
       </div>
+      <div
+        (click)="openParticipantStats()"
+        class="grid place-content-center select-none p-4 rounded-full bg-purple-400 hover:bg-purple-500 transition-all h-10 w-fit cursor-pointer"
+      >
+        <div class="flex flex-row gap-2 items-center">
+          <i class="ph ph-users"></i>
+          <span class="hidden md:block">Participants</span>
+        </div>
+      </div>
     </div>
     }
 
@@ -113,6 +122,13 @@
       >
         <i class="ph ph-download-simple text-xl"></i>
         <span>Import</span>
+      </button>
+      <button
+        (click)="openParticipantStats(); closeMobileMenu()"
+        class="flex flex-row gap-3 items-center p-3 rounded-md bg-purple-400 hover:bg-purple-500 transition-all text-white"
+      >
+        <i class="ph ph-users text-xl"></i>
+        <span>Participants</span>
       </button>
     </div>
   </div>
