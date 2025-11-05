@@ -201,8 +201,9 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
 
     console.log('Touch start on calendar event - tracking for long press');
 
-    // Don't block the event - let it flow naturally so browser can handle scrolling
-    // We'll selectively block the calendar library's drag in touchmove if needed
+    // Block calendar library from seeing this event, but DON'T preventDefault
+    // to allow browser's scroll gesture detection
+    event.stopPropagation();
 
     // Get the event ID
     const eventId = this.getEventIdFromElement(calEvent);
@@ -302,10 +303,10 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
     }
 
     // Movement is small and we're waiting for long press
-    // Block the calendar library from starting its drag
+    // Block the calendar library but allow browser scrolling
     if (this.longPressTimer) {
-      console.log('Small movement - blocking calendar drag while waiting for long press');
-      event.preventDefault();
+      console.log('Small movement - blocking calendar but allowing scroll');
+      // Only stopPropagation, NO preventDefault - this allows scrolling
       event.stopPropagation();
     }
   }
