@@ -33,6 +33,7 @@ import { ExportService } from '../../shared/services/export.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfigService } from '../../shared/services/config.service';
 import { MobileDetectionService } from '../../shared/services/mobile-detection.service';
+import { ParticipantStatsModalComponent } from './components/modals/participant-stats/participant-stats-modal.component';
 
 @Component({
   selector: 'sch-scheduler',
@@ -239,5 +240,12 @@ export class SchedulerComponent implements OnInit {
 
   closeMobileMenu() {
     this.mobileMenuOpen = false;
+  }
+
+  openParticipantStats() {
+    this.modal.open(ParticipantStatsModalComponent, {
+      size: 'lg',
+      ariaLabelledBy: 'participant-stats-modal',
+    });
   }
 }

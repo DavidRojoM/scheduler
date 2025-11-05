@@ -1,0 +1,42 @@
+<sch-modal-header
+  [title]="modalTitle"
+  (close)="close()"
+></sch-modal-header>
+
+<div class="modal-body">
+  @if (participantStats.length === 0) {
+    <div class="text-center text-gray-500 py-8">
+      <p>No participants found.</p>
+    </div>
+  } @else {
+    <div class="space-y-2">
+      @for (stat of participantStats; track stat.name) {
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+          <div class="flex-1">
+            <div class="font-medium text-gray-900">{{ stat.name }}</div>
+            <div class="text-sm text-gray-600">
+              {{ stat.totalHours }} {{ stat.totalHours === 1 ? 'hour' : 'hours' }}
+            </div>
+          </div>
+          <button
+            type="button"
+            class="ml-4 px-3 py-1.5 text-sm font-medium text-white bg-red-600 rounded hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition"
+            (click)="deleteParticipant(stat.name)"
+          >
+            Delete
+          </button>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<div class="modal-footer">
+  <button
+    type="button"
+    class="btn btn-secondary"
+    (click)="close()"
+  >
+    Close
+  </button>
+</div>
