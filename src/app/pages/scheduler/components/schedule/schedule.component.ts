@@ -110,6 +110,7 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
   private currentTouchEvent: TouchEvent | null = null;
   private currentTouchElement: HTMLElement | null = null;
   private isDragEnabled = false;
+  private isScrolling = false;
 
   get isMobile(): boolean {
     return this.mobileDetectionService.isMobile;
@@ -198,11 +199,10 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    console.log('Touch start on calendar event - blocking calendar library');
+    console.log('Touch start on calendar event - tracking for long press');
 
-    // CRITICAL: Stop the event from reaching the calendar library
-    // but DON'T preventDefault to allow scrolling gestures to work
-    event.stopPropagation();
+    // Don't block the event - let it flow naturally so browser can handle scrolling
+    // We'll selectively block the calendar library's drag in touchmove if needed
 
     // Get the event ID
     const eventId = this.getEventIdFromElement(calEvent);
@@ -261,6 +261,12 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
       return;
     }
 
+    // If user is already scrolling, don't interfere at all
+    if (this.isScrolling) {
+      console.log('User is scrolling - allowing all events');
+      return;
+    }
+
     // Check if drag is allowed (long-press completed)
     if (this.isDragEnabled && calEvent.getAttribute('data-drag-allowed') === 'true') {
       // Long press completed, allow calendar library to handle drag
@@ -278,10 +284,13 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
 
     console.log('TouchMove - delta:', deltaX, deltaY, 'threshold:', this.MOVE_THRESHOLD, 'hasTimer:', !!this.longPressTimer);
 
-    // If user moved beyond threshold before long press completed, cancel it and allow scrolling
+    // If user moved beyond threshold, they're trying to scroll
     if (deltaX > this.MOVE_THRESHOLD || deltaY > this.MOVE_THRESHOLD) {
+      console.log('Movement detected - user is scrolling');
+      this.isScrolling = true;
+
       if (this.longPressTimer) {
-        console.log('Movement detected - cancelling long press to allow scrolling');
+        console.log('Cancelling long press timer');
         this.cancelLongPress();
         calEvent.classList.remove('long-press-waiting', 'long-press-active');
         this.currentTouchEventId = null;
@@ -292,10 +301,13 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    // Movement is small, but still allow the browser to handle potential scrolling
-    // The timer will continue running, and will cancel if movement increases
-    console.log('Small movement - allowing scroll, timer continues');
-    // Don't preventDefault - let browser handle scrolling naturally
+    // Movement is small and we're waiting for long press
+    // Block the calendar library from starting its drag
+    if (this.longPressTimer) {
+      console.log('Small movement - blocking calendar drag while waiting for long press');
+      event.preventDefault();
+      event.stopPropagation();
+    }
   }
 
   private onTouchEnd(event: TouchEvent): void {
@@ -372,6 +384,7 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
     this.currentTouchEvent = null;
     this.currentTouchElement = null;
     this.isDragEnabled = false;
+    this.isScrolling = false;
   }
 
   private onTouchCancel(event: TouchEvent): void {
