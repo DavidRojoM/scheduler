@@ -127,24 +127,30 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
   ngOnInit(): void {
     this.tasksService.tasks$
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((tasks) => {
-        this.tasks = tasks
-          .filter((task) => task.columnId === this.columnId())
-          .map((task) => ({
+      .subscribe((allTasks) => {
+        // Filter tasks for this column
+        const columnTasks = allTasks.filter((task) => task.columnId === this.columnId());
+
+        // Map tasks and assign colors based on conflicts across ALL tasks
+        this.tasks = columnTasks.map((task) => {
+          const color = this.getTaskColor(task, allTasks);
+
+          return {
             id: task.id,
             title: task.title,
             start: task.start,
             end: task.end,
             color: {
-              primary: task.color.primary,
-              secondary: task.color.secondary,
+              primary: color.primary,
+              secondary: color.secondary,
             },
             // Keep draggable enabled, we'll control it via CSS and event handling
             draggable: task.draggable,
             resizable: this.isMobile ? { beforeStart: false, afterEnd: false } : task.resizable,
             participants: task.participants,
             columnId: task.columnId,
-          }));
+          };
+        });
 
         this.refresh.next();
       });
@@ -497,6 +503,41 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
     return null;
   }
 
+  /**
+   * Check if two time ranges overlap
+   */
+  private timeRangesOverlap(start1: Date, end1: Date, start2: Date, end2: Date): boolean {
+    return start1 < end2 && start2 < end1;
+  }
+
+  /**
+   * Check if a task has participant conflicts with other tasks
+   */
+  private hasParticipantConflict(task: Task, allTasks: Task[]): boolean {
+    // Check if any participant in this task appears in another task at an overlapping time
+    return allTasks.some(otherTask => {
+      // Skip the same task
+      if (task.id === otherTask.id) return false;
+
+      // Check if times overlap
+      if (!this.timeRangesOverlap(task.start, task.end, otherTask.start, otherTask.end)) {
+        return false;
+      }
+
+      // Check if any participant appears in both tasks
+      return task.participants.some(participant =>
+        otherTask.participants.includes(participant)
+      );
+    });
+  }
+
+  /**
+   * Get the appropriate color for a task based on conflicts
+   */
+  private getTaskColor(task: Task, allTasks: Task[]): typeof TASK_COLORS.blue | typeof TASK_COLORS.red {
+    return this.hasParticipantConflict(task, allTasks) ? TASK_COLORS.red : TASK_COLORS.blue;
+  }
+
   eventTimesChanged({
     event,
     newStart,
@@ -513,7 +554,7 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
           title: iEvent.title,
           columnId: this.columnId(),
           participants: iEvent.participants,
-          color: TASK_COLORS.red,
+          color: TASK_COLORS.blue,
           draggable: true,
           resizable: this.isMobile ? {
             afterEnd: false,
@@ -532,7 +573,7 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
         end: iEvent.end,
         columnId: this.columnId(),
         participants: iEvent.participants,
-        color: TASK_COLORS.red,
+        color: TASK_COLORS.blue,
         draggable: true,
         resizable: this.isMobile ? {
           afterEnd: false,
@@ -599,7 +640,7 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
       end: task.end,
       start: task.start,
       participants: task.participants,
-      color: TASK_COLORS.red,
+      color: TASK_COLORS.blue,
       draggable: true,
       resizable: this.isMobile ? {
         afterEnd: false,
@@ -621,7 +662,7 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
       end: task.end,
       start: task.start,
       participants: task.participants,
-      color: TASK_COLORS.red,
+      color: TASK_COLORS.blue,
       draggable: true,
       resizable: this.isMobile ? {
         afterEnd: false,
