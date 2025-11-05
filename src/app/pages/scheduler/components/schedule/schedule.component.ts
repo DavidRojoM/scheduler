@@ -435,21 +435,25 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
       return null;
     }
 
-    // The calendar library adds data attributes or we can find it from the task title
-    // Let's search through our tasks to match
-    const titleElement = eventElement.querySelector('.cal-event-title');
-    console.log('Found title element:', titleElement);
+    // Get all text content from the event (the title is rendered in a custom template)
+    const textContent = eventElement.textContent?.trim();
+    console.log('Event text content:', textContent);
 
-    if (titleElement) {
-      const title = titleElement.textContent?.trim();
-      console.log('Event title:', title);
+    if (textContent) {
       console.log('Available tasks:', this.tasks.map(t => ({ id: t.id, title: t.title })));
-      const matchingTask = this.tasks.find(t => t.title === title);
+
+      // Try to find a task whose title appears at the start of the text content
+      // (since there might be participant names after the title)
+      const matchingTask = this.tasks.find(t => textContent.startsWith(t.title));
       console.log('Matching task:', matchingTask);
-      return matchingTask?.id as string || null;
+
+      if (matchingTask) {
+        console.log('✅ Found task ID:', matchingTask.id);
+        return matchingTask.id as string;
+      }
     }
 
-    console.log('No title element found');
+    console.log('❌ No matching task found for text content');
     return null;
   }
 
