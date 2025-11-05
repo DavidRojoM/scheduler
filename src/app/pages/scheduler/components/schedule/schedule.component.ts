@@ -102,10 +102,13 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
   private longPressTimer: any;
   private touchStartX = 0;
   private touchStartY = 0;
+  private touchStartTime = 0;
   private readonly LONG_PRESS_DELAY = 500; // 500ms
   private readonly MOVE_THRESHOLD = 10; // 10px
+  private readonly TAP_MAX_DURATION = 500; // 500ms
   private currentTouchEventId: string | null = null;
   private currentTouchEvent: TouchEvent | null = null;
+  private currentTouchElement: HTMLElement | null = null;
   private isDragEnabled = false;
 
   get isMobile(): boolean {
@@ -213,8 +216,10 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
     const touch = event.touches[0];
     this.touchStartX = touch.clientX;
     this.touchStartY = touch.clientY;
+    this.touchStartTime = Date.now();
     this.currentTouchEventId = eventId;
     this.currentTouchEvent = event;
+    this.currentTouchElement = calEvent;
 
     // Add visual feedback
     calEvent.classList.add('long-press-waiting');
@@ -295,16 +300,44 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
 
   private onTouchEnd(event: TouchEvent): void {
     const timerExists = !!this.longPressTimer;
-    console.log('👆 Touch end - isDragEnabled:', this.isDragEnabled, 'hasTimer:', timerExists);
+    const touchDuration = Date.now() - this.touchStartTime;
+    console.log('👆 Touch end - isDragEnabled:', this.isDragEnabled, 'hasTimer:', timerExists, 'duration:', touchDuration, 'ms');
 
-    // If we're in the middle of waiting for long press, DON'T process this touchend
-    // The user is releasing their finger, but the timer hasn't completed yet
-    // We should NOT cancel the timer - let it complete
+    // If we're in the middle of waiting for long press
     if (this.longPressTimer && !this.isDragEnabled) {
-      console.log('⏱️ Timer still running, keeping it alive (user released too early or timer not done yet)');
-      // Don't prevent - this is a real user touchend
-      // But also don't cancel the timer - let it complete
-      // Just clean up the visual state
+      // Check if this was a tap (released before long press completed)
+      if (touchDuration < this.TAP_MAX_DURATION) {
+        // Calculate how much the user moved
+        const lastTouch = event.changedTouches[0];
+        const deltaX = Math.abs(lastTouch.clientX - this.touchStartX);
+        const deltaY = Math.abs(lastTouch.clientY - this.touchStartY);
+
+        console.log('Tap detected - duration:', touchDuration, 'ms, movement:', deltaX, deltaY);
+
+        // If minimal movement, treat as a tap to open the editor
+        if (deltaX < this.MOVE_THRESHOLD && deltaY < this.MOVE_THRESHOLD) {
+          console.log('👆 Opening task editor (tap detected)');
+
+          // Cancel the long press timer
+          this.cancelLongPress();
+
+          // Find the task and trigger the click handler
+          if (this.currentTouchEventId && this.currentTouchElement) {
+            const task = this.tasks.find(t => t.id === this.currentTouchEventId);
+            if (task) {
+              // Trigger the event click handler
+              this.handleEvent('task', task);
+            }
+          }
+
+          // Clean up
+          this.cleanupTouchState();
+          return;
+        }
+      }
+
+      console.log('⏱️ Timer still running, keeping it alive');
+      // Just remove visual feedback but let timer complete
       const allEvents = this.elementRef.nativeElement.querySelectorAll('.cal-event');
       allEvents.forEach((calEvent: HTMLElement) => {
         calEvent.classList.remove('long-press-waiting');
@@ -315,9 +348,13 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
     // If drag is active, allow the touchend through for the calendar
     if (this.isDragEnabled) {
       console.log('Drag was active, allowing touchend for calendar');
-      // Don't prevent - let calendar handle it
     }
 
+    // Clean up
+    this.cleanupTouchState();
+  }
+
+  private cleanupTouchState(): void {
     // Clean up all events
     const allEvents = this.elementRef.nativeElement.querySelectorAll('.cal-event');
     allEvents.forEach((calEvent: HTMLElement) => {
@@ -325,31 +362,21 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
       calEvent.removeAttribute('data-drag-allowed');
     });
 
-    // If long press wasn't completed, cancel it
+    // Cancel timer if exists
     if (this.longPressTimer) {
-      console.log('Touchend: Cancelling incomplete timer');
+      console.log('Cleanup: Cancelling timer');
       this.cancelLongPress();
     }
 
     this.currentTouchEventId = null;
     this.currentTouchEvent = null;
+    this.currentTouchElement = null;
     this.isDragEnabled = false;
   }
 
   private onTouchCancel(event: TouchEvent): void {
     console.log('Touch cancel');
-    this.cancelLongPress();
-
-    // Clean up all events
-    const allEvents = this.elementRef.nativeElement.querySelectorAll('.cal-event');
-    allEvents.forEach((calEvent: HTMLElement) => {
-      calEvent.classList.remove('long-press-waiting', 'long-press-active', 'drag-enabled');
-      calEvent.removeAttribute('data-drag-allowed');
-    });
-
-    this.currentTouchEventId = null;
-    this.currentTouchEvent = null;
-    this.isDragEnabled = false;
+    this.cleanupTouchState();
   }
 
   private triggerCalendarDrag(calEvent: HTMLElement, originalEvent: TouchEvent): void {
