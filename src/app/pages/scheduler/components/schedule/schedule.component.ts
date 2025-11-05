@@ -201,8 +201,9 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
 
     console.log('Touch start on calendar event - tracking for long press');
 
-    // Don't block events - let them flow naturally for scrolling
-    // Instead, we'll use CSS pointer-events to control drag behavior
+    // Use stopImmediatePropagation to block calendar's handlers
+    // but allow events to bubble to scroll container
+    event.stopImmediatePropagation();
 
     // Get the event ID
     const eventId = this.getEventIdFromElement(calEvent);
@@ -225,21 +226,12 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
     calEvent.classList.add('long-press-waiting');
     console.log('Added long-press-waiting class');
 
-    // Make element transparent to pointer events so touches pass through for scrolling
-    // But keep our capture-phase handlers active
-    calEvent.style.pointerEvents = 'none';
-    console.log('Set pointer-events: none for scrolling');
-
     // Start long press timer
     console.log('Starting long press timer for', this.LONG_PRESS_DELAY, 'ms');
     this.longPressTimer = setTimeout(() => {
       console.log('🎉 Long press timer completed!');
       calEvent.classList.remove('long-press-waiting');
       calEvent.classList.add('long-press-active', 'drag-enabled');
-
-      // Re-enable pointer events so drag can work
-      calEvent.style.pointerEvents = 'auto';
-      console.log('Restored pointer-events: auto for dragging');
 
       // Haptic feedback
       if ('vibrate' in navigator) {
@@ -302,20 +294,20 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
         console.log('Cancelling long press timer');
         this.cancelLongPress();
         calEvent.classList.remove('long-press-waiting', 'long-press-active');
-        // Restore pointer events for smooth scrolling
-        calEvent.style.pointerEvents = '';
         this.currentTouchEventId = null;
         this.isDragEnabled = false;
       }
-      // Don't prevent - allow scrolling
+      // Don't block - allow scrolling by letting events bubble to scroll container
       console.log('Allowing scroll');
       return;
     }
 
     // Movement is small and we're waiting for long press
-    // No need to block - pointer-events: none already prevents calendar drag
-    // and allows scrolling to work naturally
-    console.log('Small movement - pointer-events: none allows scrolling');
+    // Block calendar's handlers but let events bubble for scrolling
+    if (this.longPressTimer) {
+      console.log('Small movement - blocking calendar handlers');
+      event.stopImmediatePropagation();
+    }
   }
 
   private onTouchEnd(event: TouchEvent): void {
@@ -380,8 +372,6 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
     allEvents.forEach((calEvent: HTMLElement) => {
       calEvent.classList.remove('long-press-waiting', 'long-press-active', 'drag-enabled');
       calEvent.removeAttribute('data-drag-allowed');
-      // Restore pointer events to normal
-      calEvent.style.pointerEvents = '';
     });
 
     // Cancel timer if exists
