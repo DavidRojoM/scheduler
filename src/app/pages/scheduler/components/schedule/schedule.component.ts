@@ -292,10 +292,10 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    // Long press hasn't completed yet and no significant movement - block to prevent any action
-    console.log('Blocking touchmove - waiting for long press');
-    event.preventDefault();
-    event.stopPropagation();
+    // Movement is small, but still allow the browser to handle potential scrolling
+    // The timer will continue running, and will cancel if movement increases
+    console.log('Small movement - allowing scroll, timer continues');
+    // Don't preventDefault - let browser handle scrolling naturally
   }
 
   private onTouchEnd(event: TouchEvent): void {
