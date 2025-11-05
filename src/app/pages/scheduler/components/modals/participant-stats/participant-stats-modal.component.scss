@@ -1,3 +1,9 @@
+sch-modal-header {
+  display: block;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
 .modal-body {
   max-height: 60vh;
   overflow-y: auto;
@@ -6,4 +12,5 @@
 
 .modal-footer {
   padding: 1rem 1.5rem;
+  border-top: 1px solid #e5e7eb;
 }
