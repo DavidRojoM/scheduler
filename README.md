@@ -10,7 +10,7 @@
 ## Future Features
 
 - [x] Export whole schedule support.
-- [ ] Forbid task intersection for the same participant.
+- [x] Forbid task intersection for the same participant.
 - [ ] Refactor the whole codebase.
 - [ ] Add websockets support.
 - [ ] Add proper alerts and error handling

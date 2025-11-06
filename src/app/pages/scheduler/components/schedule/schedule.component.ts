@@ -8,7 +8,6 @@ import {
   OnInit,
   ElementRef,
   AfterViewInit,
-  ChangeDetectorRef,
 } from '@angular/core';
 import { Subject } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -98,7 +97,6 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
 
   activeDayIsOpen: boolean = true;
 
-  // Long press state for mobile
   private longPressTimer: any;
   private touchStartX = 0;
   private touchStartY = 0;
@@ -121,17 +119,16 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
     private readonly tasksService: TasksService,
     private readonly destroyRef: DestroyRef,
     private readonly mobileDetectionService: MobileDetectionService,
-    private readonly elementRef: ElementRef,
-    private readonly cdr: ChangeDetectorRef
+    private readonly elementRef: ElementRef
   ) {}
   ngOnInit(): void {
     this.tasksService.tasks$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((allTasks) => {
-        // Filter tasks for this column
-        const columnTasks = allTasks.filter((task) => task.columnId === this.columnId());
+        const columnTasks = allTasks.filter(
+          (task) => task.columnId === this.columnId()
+        );
 
-        // Map tasks and assign colors based on conflicts across ALL tasks
         this.tasks = columnTasks.map((task) => {
           const color = this.getTaskColor(task, allTasks);
 
@@ -144,9 +141,10 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
               primary: color.primary,
               secondary: color.secondary,
             },
-            // Keep draggable enabled, we'll control it via CSS and event handling
             draggable: task.draggable,
-            resizable: this.isMobile ? { beforeStart: false, afterEnd: false } : task.resizable,
+            resizable: this.isMobile
+              ? { beforeStart: false, afterEnd: false }
+              : task.resizable,
             participants: task.participants,
             columnId: task.columnId,
           };
@@ -157,15 +155,12 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    // Always setup on mobile, but let's force it for testing
-    console.log('Setting up long press, isMobile:', this.isMobile);
     this.setupLongPressDrag();
   }
 
   private setupLongPressDrag(): void {
     const element = this.elementRef.nativeElement;
 
-    // Use capture phase to intercept BEFORE calendar library
     const boundOnTouchStart = this.onTouchStart.bind(this);
     const boundOnTouchMove = this.onTouchMove.bind(this);
     const boundOnTouchEnd = this.onTouchEnd.bind(this);
@@ -194,31 +189,23 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
     const calEvent = target.closest('.cal-event') as HTMLElement;
 
     if (!calEvent) {
-      // Not touching an event, allow normal behavior
       this.isDragEnabled = false;
       return;
     }
 
-    // If drag is already enabled (continuing a drag), allow it
-    if (this.isDragEnabled && calEvent.getAttribute('data-drag-allowed') === 'true') {
-      console.log('Drag already enabled, allowing touchstart');
+    if (
+      this.isDragEnabled &&
+      calEvent.getAttribute('data-drag-allowed') === 'true'
+    ) {
       return;
     }
 
-    console.log('Touch start on calendar event - tracking for long press');
-
-    // Use stopImmediatePropagation to block calendar's handlers
-    // but allow events to bubble to scroll container
     event.stopImmediatePropagation();
 
-    // Get the event ID
     const eventId = this.getEventIdFromElement(calEvent);
-    console.log('Event ID from element:', eventId);
     if (!eventId) {
-      console.log('❌ No event ID found - exiting early');
       return;
     }
-    console.log('✅ Event ID found, proceeding with long press setup');
 
     const touch = event.touches[0];
     this.touchStartX = touch.clientX;
@@ -228,33 +215,20 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
     this.currentTouchEvent = event;
     this.currentTouchElement = calEvent;
 
-    // Add visual feedback
     calEvent.classList.add('long-press-waiting');
-    console.log('Added long-press-waiting class');
 
-    // Start long press timer
-    console.log('Starting long press timer for', this.LONG_PRESS_DELAY, 'ms');
     this.longPressTimer = setTimeout(() => {
-      console.log('🎉 Long press timer completed!');
       calEvent.classList.remove('long-press-waiting');
       calEvent.classList.add('long-press-active', 'drag-enabled');
 
-      // Haptic feedback
       if ('vibrate' in navigator) {
         navigator.vibrate(50);
-        console.log('Vibrated');
       }
 
-      // Mark that dragging is now allowed
       calEvent.setAttribute('data-drag-allowed', 'true');
       this.isDragEnabled = true;
 
-      // Clear the timer reference since it completed
       this.longPressTimer = null;
-      console.log('Timer reference cleared (completed naturally)');
-
-      // Now re-trigger the touch event so calendar can start dragging
-      console.log('Re-triggering touch event for calendar library');
       this.triggerCalendarDrag(calEvent, event);
     }, this.LONG_PRESS_DELAY);
   }
@@ -264,20 +238,17 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
     const calEvent = target.closest('.cal-event') as HTMLElement;
 
     if (!calEvent) {
-      // Not on an event, allow scrolling
       return;
     }
 
-    // If user is already scrolling, don't interfere at all
     if (this.isScrolling) {
-      console.log('User is scrolling - allowing all events');
       return;
     }
 
-    // Check if drag is allowed (long-press completed)
-    if (this.isDragEnabled && calEvent.getAttribute('data-drag-allowed') === 'true') {
-      // Long press completed, allow calendar library to handle drag
-      console.log('Drag enabled - allowing touchmove');
+    if (
+      this.isDragEnabled &&
+      calEvent.getAttribute('data-drag-allowed') === 'true'
+    ) {
       return;
     }
 
@@ -289,29 +260,19 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
     const deltaX = Math.abs(touch.clientX - this.touchStartX);
     const deltaY = Math.abs(touch.clientY - this.touchStartY);
 
-    console.log('TouchMove - delta:', deltaX, deltaY, 'threshold:', this.MOVE_THRESHOLD, 'hasTimer:', !!this.longPressTimer);
-
-    // If user moved beyond threshold, they're trying to scroll
     if (deltaX > this.MOVE_THRESHOLD || deltaY > this.MOVE_THRESHOLD) {
-      console.log('Movement detected - user is scrolling');
       this.isScrolling = true;
 
       if (this.longPressTimer) {
-        console.log('Cancelling long press timer');
         this.cancelLongPress();
         calEvent.classList.remove('long-press-waiting', 'long-press-active');
         this.currentTouchEventId = null;
         this.isDragEnabled = false;
       }
-      // Don't block - allow scrolling by letting events bubble to scroll container
-      console.log('Allowing scroll');
       return;
     }
 
-    // Movement is small and we're waiting for long press
-    // Block calendar's handlers but let events bubble for scrolling
     if (this.longPressTimer) {
-      console.log('Small movement - blocking calendar handlers');
       event.stopImmediatePropagation();
     }
   }
@@ -319,70 +280,54 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
   private onTouchEnd(event: TouchEvent): void {
     const timerExists = !!this.longPressTimer;
     const touchDuration = Date.now() - this.touchStartTime;
-    console.log('👆 Touch end - isDragEnabled:', this.isDragEnabled, 'hasTimer:', timerExists, 'duration:', touchDuration, 'ms');
 
-    // If we're in the middle of waiting for long press
     if (this.longPressTimer && !this.isDragEnabled) {
-      // Check if this was a tap (released before long press completed)
       if (touchDuration < this.TAP_MAX_DURATION) {
-        // Calculate how much the user moved
         const lastTouch = event.changedTouches[0];
         const deltaX = Math.abs(lastTouch.clientX - this.touchStartX);
         const deltaY = Math.abs(lastTouch.clientY - this.touchStartY);
 
-        console.log('Tap detected - duration:', touchDuration, 'ms, movement:', deltaX, deltaY);
-
-        // If minimal movement, treat as a tap to open the editor
         if (deltaX < this.MOVE_THRESHOLD && deltaY < this.MOVE_THRESHOLD) {
-          console.log('👆 Opening task editor (tap detected)');
-
-          // Cancel the long press timer
           this.cancelLongPress();
 
-          // Find the task and trigger the click handler
           if (this.currentTouchEventId && this.currentTouchElement) {
-            const task = this.tasks.find(t => t.id === this.currentTouchEventId);
+            const task = this.tasks.find(
+              (t) => t.id === this.currentTouchEventId
+            );
             if (task) {
-              // Trigger the event click handler
               this.handleEvent('task', task);
             }
           }
 
-          // Clean up
           this.cleanupTouchState();
           return;
         }
       }
 
-      console.log('⏱️ Timer still running, keeping it alive');
-      // Just remove visual feedback but let timer complete
-      const allEvents = this.elementRef.nativeElement.querySelectorAll('.cal-event');
+      const allEvents =
+        this.elementRef.nativeElement.querySelectorAll('.cal-event');
       allEvents.forEach((calEvent: HTMLElement) => {
         calEvent.classList.remove('long-press-waiting');
       });
       return;
     }
 
-    // If drag is active, allow the touchend through for the calendar
-    if (this.isDragEnabled) {
-      console.log('Drag was active, allowing touchend for calendar');
-    }
-
-    // Clean up
     this.cleanupTouchState();
   }
 
   private cleanupTouchState(): void {
-    // Clean up all events
-    const allEvents = this.elementRef.nativeElement.querySelectorAll('.cal-event');
+    const allEvents =
+      this.elementRef.nativeElement.querySelectorAll('.cal-event');
     allEvents.forEach((calEvent: HTMLElement) => {
-      calEvent.classList.remove('long-press-waiting', 'long-press-active', 'drag-enabled');
+      calEvent.classList.remove(
+        'long-press-waiting',
+        'long-press-active',
+        'drag-enabled'
+      );
       calEvent.removeAttribute('data-drag-allowed');
     });
 
-    // Cancel timer if exists
     if (this.longPressTimer) {
-      console.log('Cleanup: Cancelling timer');
       this.cancelLongPress();
     }
 
@@ -394,17 +339,15 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
   }
 
   private onTouchCancel(event: TouchEvent): void {
-    console.log('Touch cancel');
     this.cleanupTouchState();
   }
 
-  private triggerCalendarDrag(calEvent: HTMLElement, originalEvent: TouchEvent): void {
-    // We need to simulate the user starting a new touch on this element
-    // The calendar library needs a fresh touchstart to begin its drag
-
+  private triggerCalendarDrag(
+    calEvent: HTMLElement,
+    originalEvent: TouchEvent
+  ): void {
     const touch = originalEvent.touches[0];
 
-    // Create a new touch object
     const newTouch = new Touch({
       identifier: Date.now(),
       target: calEvent,
@@ -420,7 +363,6 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
       force: 0.5,
     });
 
-    // Dispatch the new touchstart event
     const newTouchEvent = new TouchEvent('touchstart', {
       cancelable: true,
       bubbles: true,
@@ -429,10 +371,8 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
       changedTouches: [newTouch],
     });
 
-    console.log('Dispatching new touchstart to', calEvent);
     calEvent.dispatchEvent(newTouchEvent);
 
-    // Also dispatch a small touchmove to actually start the drag
     setTimeout(() => {
       const moveTouch = new Touch({
         identifier: Date.now(),
@@ -457,85 +397,75 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
         changedTouches: [moveTouch],
       });
 
-      console.log('Dispatching touchmove to initiate drag');
       calEvent.dispatchEvent(moveTouchEvent);
     }, 10);
   }
 
   private cancelLongPress(): void {
     if (this.longPressTimer) {
-      console.log('❌ Cancelling long press timer');
       clearTimeout(this.longPressTimer);
       this.longPressTimer = null;
     }
   }
 
   private getEventIdFromElement(element: Element): string | null {
-    console.log('Getting event ID from element:', element);
-
-    // Try to find the event ID from the calendar event element
     const eventElement = element.closest('.cal-event');
-    console.log('Found cal-event element:', eventElement);
     if (!eventElement) {
-      console.log('No cal-event element found');
       return null;
     }
 
-    // Get all text content from the event (the title is rendered in a custom template)
     const textContent = eventElement.textContent?.trim();
-    console.log('Event text content:', textContent);
 
     if (textContent) {
-      console.log('Available tasks:', this.tasks.map(t => ({ id: t.id, title: t.title })));
-
-      // Try to find a task whose title appears at the start of the text content
-      // (since there might be participant names after the title)
-      const matchingTask = this.tasks.find(t => textContent.startsWith(t.title));
-      console.log('Matching task:', matchingTask);
+      const matchingTask = this.tasks.find((t) =>
+        textContent.startsWith(t.title)
+      );
 
       if (matchingTask) {
-        console.log('✅ Found task ID:', matchingTask.id);
-        return matchingTask.id as string;
+        return matchingTask.id;
       }
     }
 
-    console.log('❌ No matching task found for text content');
     return null;
   }
 
-  /**
-   * Check if two time ranges overlap
-   */
-  private timeRangesOverlap(start1: Date, end1: Date, start2: Date, end2: Date): boolean {
+  private timeRangesOverlap(
+    start1: Date,
+    end1: Date,
+    start2: Date,
+    end2: Date
+  ): boolean {
     return start1 < end2 && start2 < end1;
   }
 
-  /**
-   * Check if a task has participant conflicts with other tasks
-   */
   private hasParticipantConflict(task: Task, allTasks: Task[]): boolean {
-    // Check if any participant in this task appears in another task at an overlapping time
-    return allTasks.some(otherTask => {
-      // Skip the same task
+    return allTasks.some((otherTask) => {
       if (task.id === otherTask.id) return false;
 
-      // Check if times overlap
-      if (!this.timeRangesOverlap(task.start, task.end, otherTask.start, otherTask.end)) {
+      if (
+        !this.timeRangesOverlap(
+          task.start,
+          task.end,
+          otherTask.start,
+          otherTask.end
+        )
+      ) {
         return false;
       }
 
-      // Check if any participant appears in both tasks
-      return task.participants.some(participant =>
+      return task.participants.some((participant) =>
         otherTask.participants.includes(participant)
       );
     });
   }
 
-  /**
-   * Get the appropriate color for a task based on conflicts
-   */
-  private getTaskColor(task: Task, allTasks: Task[]): typeof TASK_COLORS.blue | typeof TASK_COLORS.red {
-    return this.hasParticipantConflict(task, allTasks) ? TASK_COLORS.red : TASK_COLORS.blue;
+  private getTaskColor(
+    task: Task,
+    allTasks: Task[]
+  ): typeof TASK_COLORS.blue | typeof TASK_COLORS.red {
+    return this.hasParticipantConflict(task, allTasks)
+      ? TASK_COLORS.red
+      : TASK_COLORS.blue;
   }
 
   eventTimesChanged({
@@ -548,7 +478,6 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
         // TODO: Refactor
         return {
           ...event,
-          // @ts-ignore
           start: newStart,
           end: newEnd as Date,
           title: iEvent.title,
@@ -556,13 +485,15 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
           participants: iEvent.participants,
           color: TASK_COLORS.blue,
           draggable: true,
-          resizable: this.isMobile ? {
-            afterEnd: false,
-            beforeStart: false,
-          } : {
-            afterEnd: true,
-            beforeStart: true,
-          },
+          resizable: this.isMobile
+            ? {
+                afterEnd: false,
+                beforeStart: false,
+              }
+            : {
+                afterEnd: true,
+                beforeStart: true,
+              },
           id: event.id as string,
         };
       }
@@ -575,13 +506,15 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
         participants: iEvent.participants,
         color: TASK_COLORS.blue,
         draggable: true,
-        resizable: this.isMobile ? {
-          afterEnd: false,
-          beforeStart: false,
-        } : {
-          afterEnd: true,
-          beforeStart: true,
-        },
+        resizable: this.isMobile
+          ? {
+              afterEnd: false,
+              beforeStart: false,
+            }
+          : {
+              afterEnd: true,
+              beforeStart: true,
+            },
       };
     });
 
@@ -642,13 +575,15 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
       participants: task.participants,
       color: TASK_COLORS.blue,
       draggable: true,
-      resizable: this.isMobile ? {
-        afterEnd: false,
-        beforeStart: false,
-      } : {
-        afterEnd: true,
-        beforeStart: true,
-      },
+      resizable: this.isMobile
+        ? {
+            afterEnd: false,
+            beforeStart: false,
+          }
+        : {
+            afterEnd: true,
+            beforeStart: true,
+          },
     });
 
     this.refresh.next();
@@ -664,13 +599,15 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
       participants: task.participants,
       color: TASK_COLORS.blue,
       draggable: true,
-      resizable: this.isMobile ? {
-        afterEnd: false,
-        beforeStart: false,
-      } : {
-        afterEnd: true,
-        beforeStart: true,
-      },
+      resizable: this.isMobile
+        ? {
+            afterEnd: false,
+            beforeStart: false,
+          }
+        : {
+            afterEnd: true,
+            beforeStart: true,
+          },
     });
 
     this.refresh.next();

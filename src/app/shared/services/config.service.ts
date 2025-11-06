@@ -2,12 +2,16 @@ import { Injectable } from '@angular/core';
 import { LocalstorageService } from './localstorage.service';
 import { Task } from '../../pages/scheduler/components/modals/task/task-modal.component';
 import { setHours, setMinutes } from 'date-fns';
+import { LogoService } from './logo.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ConfigService {
-  constructor(private readonly localstorageService: LocalstorageService) {}
+  constructor(
+    private readonly localstorageService: LocalstorageService,
+    private readonly logoService: LogoService
+  ) {}
 
   setColumns(
     columns: {
@@ -54,6 +58,7 @@ export class ConfigService {
     }[];
     tasks: Task[];
     participants: string[];
+    logo?: string | null;
   }) {
     this.localstorageService.set({
       scope: 'columns',
@@ -84,6 +89,12 @@ export class ConfigService {
         };
       }),
     });
+
+    if (config.logo) {
+      this.logoService.setLogo(config.logo);
+    } else {
+      this.logoService.removeLogo();
+    }
   }
 
   getConfig(): {
@@ -93,6 +104,7 @@ export class ConfigService {
     }[];
     tasks: Task[];
     participants: string[];
+    logo: string | null;
   } {
     const config = this.localstorageService.findAll();
 
@@ -119,6 +131,7 @@ export class ConfigService {
           participants: task.participants,
         };
       }),
+      logo: this.logoService.getLogo(),
     };
   }
 }

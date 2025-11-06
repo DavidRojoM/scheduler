@@ -34,12 +34,9 @@ export class ParticipantStatsModalComponent implements OnInit {
   }
 
   private calculateParticipantStats(): void {
-    // Get all tasks
     this.tasksService.tasks$.pipe(take(1)).subscribe((tasks) => {
-      // Create a map to track hours per participant
       const hoursMap = new Map<string, number>();
 
-      // Calculate hours for each participant
       tasks.forEach((task) => {
         const durationMs = task.end.getTime() - task.start.getTime();
         const durationHours = durationMs / (1000 * 60 * 60);
@@ -50,7 +47,6 @@ export class ParticipantStatsModalComponent implements OnInit {
         });
       });
 
-      // Convert map to array and sort by total minutes descending
       this.participantStats = Array.from(hoursMap.entries())
         .map(([name, totalHours]) => ({
           name,
@@ -66,23 +62,22 @@ export class ParticipantStatsModalComponent implements OnInit {
     );
 
     if (confirmed) {
-      // Remove participant from the participants service
       this.participantsService.deleteParticipant(participantName);
 
-      // Remove participant from all tasks
       this.tasksService.tasks$.pipe(take(1)).subscribe((tasks) => {
         tasks.forEach((task) => {
           if (task.participants.includes(participantName)) {
             const updatedTask = {
               ...task,
-              participants: task.participants.filter((p) => p !== participantName),
+              participants: task.participants.filter(
+                (p) => p !== participantName
+              ),
             };
             this.tasksService.updateTask(updatedTask);
           }
         });
       });
 
-      // Recalculate stats
       this.calculateParticipantStats();
     }
   }

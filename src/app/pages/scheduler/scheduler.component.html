@@ -1,131 +1,82 @@
 <main class="flex flex-col gap-2 overflow-x-auto h-screen touch-pan-x">
   <div
-    class="flex flex-row gap-2 w-full bg-gray-600 p-2 sticky top-0 left-0 z-50"
+    class="flex flex-row gap-3 w-full bg-gray-800 p-3 sticky top-0 left-0 z-50 shadow-lg"
   >
-    <!-- Burger menu button (mobile only) -->
-    @if (isMobile) {
-    <div
+    <button
       (click)="toggleMobileMenu()"
-      class="grid place-content-center select-none p-4 rounded-full bg-blue-200 hover:bg-blue-300 transition-all h-10 w-fit cursor-pointer"
+      class="flex items-center justify-center px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition-all cursor-pointer border border-gray-600 shadow-sm"
     >
-      <i class="ph text-xl" [class.ph-list]="!mobileMenuOpen" [class.ph-x]="mobileMenuOpen"></i>
-    </div>
-    }
+      <i
+        class="ph text-xl text-white"
+        [class.ph-list]="!mobileMenuOpen"
+        [class.ph-x]="mobileMenuOpen"
+      ></i>
+    </button>
 
-    <!-- Buttons that show in navbar on mobile (hidden in burger menu) -->
-    @if (!isMobile) {
-    <div class="flex flex-row gap-2">
-      <div
-        (click)="open(wipeConfirmation)"
-        class="grid place-content-center select-none p-4 rounded-full bg-red-400 hover:bg-red-500 transition-all h-10 w-fit cursor-pointer"
-      >
-        <div class="flex flex-row gap-2 items-center">
-          <i class="ph ph-trash"></i>
-          <span class="hidden md:block">Wipe Data</span>
-        </div>
-      </div>
-      <div
-        (click)="exportAndDownload()"
-        class="grid place-content-center select-none p-4 rounded-full bg-green-400 hover:bg-green-500 transition-all h-10 w-fit cursor-pointer"
-      >
-        <div class="flex flex-row gap-2 items-center">
-          <i class="ph ph-file-arrow-down"></i>
-          <span class="hidden md:block">Download</span>
-        </div>
-      </div>
-      <div
-        (click)="takeScreenshot()"
-        class="grid place-content-center select-none p-4 rounded-full bg-blue-200 hover:bg-blue-300 transition-all h-10 w-fit cursor-pointer"
-      >
-        <div class="flex flex-row gap-2 items-center">
-          <i class="ph ph-projector-screen"></i>
-          <span class="hidden md:block">Screenshot</span>
-        </div>
-      </div>
-      <div
-        (click)="updateExportHash(); open(exportModal)"
-        class="grid place-content-center select-none p-4 rounded-full bg-blue-200 hover:bg-blue-300 transition-all h-10 w-fit cursor-pointer"
-      >
-        <div class="flex flex-row gap-2 items-center">
-          <i class="ph ph-share-network"></i>
-          <span class="hidden md:block">Export</span>
-        </div>
-      </div>
-      <div
-        (click)="open(importModal)"
-        class="grid place-content-center select-none p-4 rounded-full bg-blue-200 hover:bg-blue-300 transition-all h-10 w-fit cursor-pointer"
-      >
-        <div class="flex flex-row gap-2 items-center">
-          <i class="ph ph-download-simple"></i>
-          <span class="hidden md:block">Import</span>
-        </div>
-      </div>
-      <div
-        (click)="openParticipantStats()"
-        class="grid place-content-center select-none p-4 rounded-full bg-purple-400 hover:bg-purple-500 transition-all h-10 w-fit cursor-pointer"
-      >
-        <div class="flex flex-row gap-2 items-center">
-          <i class="ph ph-users"></i>
-          <span class="hidden md:block">Participants</span>
-        </div>
-      </div>
-    </div>
-    }
-
-    <!-- Add Column button (always visible) -->
-    <div
+    <button
       (click)="addColumn()"
-      class="grid place-content-center select-none p-4 rounded-full bg-blue-200 hover:bg-blue-300 transition-all h-10 w-fit cursor-pointer"
+      class="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition-all cursor-pointer shadow-sm text-white font-medium"
     >
-      <div class="flex flex-row gap-2 items-center">
-        <i class="ph ph-plus"></i>
-        <span class="hidden md:block">Add Column</span>
-      </div>
-    </div>
+      <i class="ph ph-plus text-xl"></i>
+      <span class="hidden md:block">Add Column</span>
+    </button>
   </div>
 
-  <!-- Mobile menu dropdown -->
-  @if (isMobile && mobileMenuOpen) {
-  <div class="fixed inset-0 top-14 bg-black bg-opacity-50 z-40 mobile-menu-overlay" (click)="closeMobileMenu()">
-    <div class="bg-gray-700 p-4 flex flex-col gap-3 shadow-xl mobile-menu-content" (click)="$event.stopPropagation()">
+  @if (mobileMenuOpen) {
+  <div
+    class="fixed inset-0 top-[60px] bg-black bg-opacity-10 z-40"
+    (click)="closeMobileMenu()"
+  >
+    <div
+      class="bg-gray-800 p-4 flex flex-col gap-2 shadow-2xl border-b border-gray-700 max-w-md"
+      (click)="$event.stopPropagation()"
+    >
       <button
         (click)="open(wipeConfirmation); closeMobileMenu()"
-        class="flex flex-row gap-3 items-center p-3 rounded-md bg-red-400 hover:bg-red-500 transition-all text-white"
+        class="flex flex-row gap-3 items-center px-4 py-3 rounded-lg bg-red-600 hover:bg-red-700 transition-all text-white font-medium shadow-sm"
       >
         <i class="ph ph-trash text-xl"></i>
         <span>Wipe Data</span>
       </button>
       <button
         (click)="exportAndDownload(); closeMobileMenu()"
-        class="flex flex-row gap-3 items-center p-3 rounded-md bg-green-400 hover:bg-green-500 transition-all text-white"
+        class="flex flex-row gap-3 items-center px-4 py-3 rounded-lg bg-green-600 hover:bg-green-700 transition-all text-white font-medium shadow-sm"
       >
         <i class="ph ph-file-arrow-down text-xl"></i>
         <span>Download</span>
       </button>
       <button
         (click)="takeScreenshot(); closeMobileMenu()"
-        class="flex flex-row gap-3 items-center p-3 rounded-md bg-blue-200 hover:bg-blue-300 transition-all"
+        class="flex flex-row gap-3 items-center px-4 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 transition-all text-white font-medium shadow-sm"
       >
         <i class="ph ph-projector-screen text-xl"></i>
         <span>Screenshot</span>
       </button>
       <button
         (click)="updateExportHash(); open(exportModal); closeMobileMenu()"
-        class="flex flex-row gap-3 items-center p-3 rounded-md bg-blue-200 hover:bg-blue-300 transition-all"
+        class="flex flex-row gap-3 items-center px-4 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 transition-all text-white font-medium shadow-sm"
       >
         <i class="ph ph-share-network text-xl"></i>
         <span>Export</span>
       </button>
       <button
         (click)="open(importModal); closeMobileMenu()"
-        class="flex flex-row gap-3 items-center p-3 rounded-md bg-blue-200 hover:bg-blue-300 transition-all"
+        class="flex flex-row gap-3 items-center px-4 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 transition-all text-white font-medium shadow-sm"
       >
         <i class="ph ph-download-simple text-xl"></i>
         <span>Import</span>
       </button>
       <button
+        (click)="open(logoModal); closeMobileMenu()"
+        class="flex flex-row gap-3 items-center px-4 py-3 rounded-lg bg-purple-600 hover:bg-purple-700 transition-all text-white font-medium shadow-sm"
+      >
+        <i class="ph ph-image text-xl"></i>
+        <span>Logo</span>
+      </button>
+
+      <button
         (click)="openParticipantStats(); closeMobileMenu()"
-        class="flex flex-row gap-3 items-center p-3 rounded-md bg-purple-400 hover:bg-purple-500 transition-all text-white"
+        class="flex flex-row gap-3 items-center px-4 py-3 rounded-lg bg-purple-600 hover:bg-purple-700 transition-all text-white font-medium shadow-sm"
       >
         <i class="ph ph-users text-xl"></i>
         <span>Participants</span>
@@ -181,7 +132,7 @@
         </div>
         <ng-template #deleteColumnConfirmation let-modal>
           <div class="modal-header">
-            <h4 class="modal-title" id="modal-basic-title">Delete Column</h4>
+            <h4 class="modal-title" id="modal-delete-title">Delete Column</h4>
             <button
               type="button"
               class="btn-close"
@@ -220,7 +171,7 @@
 
 <ng-template #wipeConfirmation let-modal>
   <div class="modal-header">
-    <h4 class="modal-title" id="modal-basic-title">Wipe Data</h4>
+    <h4 class="modal-title" id="modal-wipe-title">Wipe Data</h4>
     <button
       type="button"
       class="btn-close"
@@ -249,7 +200,7 @@
 
 <ng-template #exportModal let-modal>
   <div class="modal-header">
-    <h4 class="modal-title" id="modal-basic-title">Export</h4>
+    <h4 class="modal-title" id="modal-export-title">Export</h4>
     <button
       type="button"
       class="btn-close"
@@ -279,7 +230,7 @@
 
 <ng-template #importModal let-modal>
   <div class="modal-header">
-    <h4 class="modal-title" id="modal-basic-title">Import</h4>
+    <h4 class="modal-title" id="modal-import-title">Import</h4>
     <button
       type="button"
       class="btn-close"
@@ -310,6 +261,59 @@
       (click)="modal.dismiss()"
     >
       Cancel
+    </button>
+  </div>
+</ng-template>
+
+<ng-template #logoModal let-modal>
+  <div class="modal-header">
+    <h4 class="modal-title" id="modal-logo-title">PDF Logo</h4>
+    <button
+      type="button"
+      class="btn-close"
+      aria-label="Close"
+      (click)="modal.dismiss()"
+    ></button>
+  </div>
+  <div class="modal-body flex flex-col gap-4">
+    <div class="flex flex-col gap-2">
+      <span class="font-semibold">Upload Logo (SVG only)</span>
+      <input
+        type="file"
+        accept=".svg,image/svg+xml"
+        (change)="onLogoFileSelected($event)"
+        class="border rounded-md px-2 py-1"
+        #logoInput
+      />
+      <p class="text-sm text-gray-600">
+        This logo will appear at the top of exported PDFs for participants.
+      </p>
+    </div>
+
+    @if (logoPreview) {
+    <div class="flex flex-col gap-2">
+      <span class="font-semibold">Current Logo</span>
+      <div
+        class="border rounded-md p-4 bg-gray-50 flex justify-center"
+        [innerHTML]="logoPreview"
+      ></div>
+      <button type="button" class="btn btn-danger w-fit" (click)="removeLogo()">
+        Remove Logo
+      </button>
+    </div>
+    } @else {
+    <div class="text-sm text-gray-500 italic">
+      No logo uploaded. PDFs will be generated without a logo.
+    </div>
+    }
+  </div>
+  <div class="modal-footer">
+    <button
+      type="button"
+      class="btn btn-outline-secondary"
+      (click)="modal.dismiss()"
+    >
+      Close
     </button>
   </div>
 </ng-template>

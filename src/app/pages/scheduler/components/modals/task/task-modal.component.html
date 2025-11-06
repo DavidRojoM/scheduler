@@ -62,15 +62,31 @@
         [clearSearchOnAdd]="true"
       >
         <ng-template ng-option-tmp let-item="item" let-search="searchTerm">
-          <div [style.color]="item.isConflicted ? 'red' : 'black'" [style.font-weight]="item.isConflicted ? 'bold' : 'normal'">
-            {{ item.isConflicted ? '⚠️ ' : '' }}{{ item.name }}
+          <div
+            [style.color]="item.isConflicted ? 'red' : 'black'"
+            [style.font-weight]="item.isConflicted ? 'bold' : 'normal'"
+          >
+            {{ item.isConflicted ? "⚠️ " : "" }}{{ item.name }}
           </div>
         </ng-template>
         <ng-template ng-label-tmp let-item="item" let-clear="clear">
-          <span class="ng-value-label" [style.color]="isParticipantConflicted(getParticipantName(item)) ? 'red' : 'black'" [style.font-weight]="isParticipantConflicted(getParticipantName(item)) ? 'bold' : 'normal'">
-            {{ isParticipantConflicted(getParticipantName(item)) ? '⚠️ ' : '' }}{{ getParticipantName(item) }}
+          <span
+            class="ng-value-label"
+            [style.color]="
+              isParticipantConflicted(getParticipantName(item))
+                ? 'red'
+                : 'black'
+            "
+            [style.font-weight]="
+              isParticipantConflicted(getParticipantName(item))
+                ? 'bold'
+                : 'normal'
+            "
+          >
+            {{ isParticipantConflicted(getParticipantName(item)) ? "⚠️ " : ""
+            }}{{ getParticipantName(item) }}
           </span>
-          <span class="ng-value-icon right" (click)="clear(item)" aria-hidden="true">×</span>
+          <button class="ng-value-icon right" (click)="clear(item)">×</button>
         </ng-template>
       </ng-select>
     </div>

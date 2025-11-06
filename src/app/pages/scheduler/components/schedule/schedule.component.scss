@@ -1,30 +1,24 @@
 :host {
   display: block;
 
-  // Enable smooth scrolling on mobile
   -webkit-overflow-scrolling: touch;
 
-  // Allow panning and pinch zoom on mobile while enabling drag
   touch-action: pan-y pan-x;
 }
 
-// Mobile calendar wrapper
 .mobile-calendar {
-  // Allow scrolling in both directions
   ::ng-deep .cal-day-view {
     touch-action: pan-y pan-x;
     overflow: auto;
     -webkit-overflow-scrolling: touch;
   }
 
-  // Allow scrolling in the time column area on mobile
   ::ng-deep .cal-time-events {
     touch-action: pan-y pan-x;
     overflow-y: auto;
     overflow-x: hidden;
   }
 
-  // Events with smooth transitions for animations
   ::ng-deep .cal-event {
     cursor: pointer;
     -webkit-user-select: none;
@@ -32,13 +26,11 @@
     transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
   }
 
-  // Visual feedback while waiting for long press
   ::ng-deep .cal-event.long-press-waiting {
     opacity: 0.8;
     transform: scale(0.98);
   }
 
-  // Visual feedback when long press is activated
   ::ng-deep .cal-event.long-press-active {
     opacity: 1;
     transform: scale(1.05);
@@ -46,34 +38,28 @@
     z-index: 1000;
   }
 
-  // Hide resize handles on mobile (visual feedback that resizing is disabled)
   ::ng-deep .cal-resize-handle {
     display: none !important;
   }
 }
 
-// Mobile-specific calendar styles
 @media (max-width: 768px) {
-  // Make calendar day view scrollable
   ::ng-deep .cal-day-view {
     touch-action: pan-y pan-x;
     overflow: auto;
     -webkit-overflow-scrolling: touch;
   }
 
-  // Allow scrolling in the time column area
   ::ng-deep .cal-time-events {
     touch-action: pan-y pan-x;
     overflow: auto;
   }
 
-  // Events should be draggable with long press, but allow initial scroll
   ::ng-deep .cal-event {
     touch-action: none; // This allows drag after long press
     cursor: pointer;
   }
 
-  // Hide resize handles on mobile (visual feedback that resizing is disabled)
   ::ng-deep .cal-resize-handle {
     display: none !important;
   }

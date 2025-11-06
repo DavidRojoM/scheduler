@@ -1,14 +1,11 @@
-/* Animate items as they're being sorted. */
 .cdk-drop-list-dragging .cdk-drag {
   transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
 }
 
-/* Animate an item that has been dropped. */
 .cdk-drag-animating {
   transition: transform 300ms cubic-bezier(0, 0, 0.2, 1);
 }
 
-/* Animate item that is being sorted. */
 .cdk-drag-preview {
   box-sizing: border-box;
   border-radius: 4px;
@@ -21,13 +18,11 @@
   opacity: 0;
 }
 
-// Mobile touch improvements
 .touch-pan-x {
   -webkit-overflow-scrolling: touch;
   touch-action: pan-x pan-y;
 }
 
-// Mobile menu styles
 .mobile-menu-overlay {
   animation: fadeIn 0.2s ease;
 }
@@ -56,15 +51,13 @@
   }
 }
 
-// Sticky column headers
 .sticky-column-header {
   position: sticky;
   top: 0;
   z-index: 10;
 
-  // Ensure proper rounding on sticky state
   &::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
@@ -77,24 +70,20 @@
 }
 
 @media (max-width: 768px) {
-  // Improve scrolling on mobile
   main {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-x: contain;
   }
 
-  // Ensure columns remain draggable on mobile with longer delay
   .cdk-drag {
     touch-action: none;
   }
 
-  // Reduce column width on mobile for better viewing
   .flex.flex-col.divide-y {
     width: 90vw !important;
     min-width: 90vw !important;
   }
 
-  // Hide desktop button labels on mobile
   .hidden {
     display: none !important;
   }
