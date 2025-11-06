@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  HostListener,
   OnInit,
   TemplateRef,
   ViewChild,
@@ -254,6 +255,23 @@ export class SchedulerComponent implements OnInit {
 
   closeMobileMenu() {
     this.mobileMenuOpen = false;
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  onKeyDown(event: KeyboardEvent) {
+    if (event.key === 'Escape' && this.mobileMenuOpen) {
+      this.closeMobileMenu();
+      return;
+    }
+
+    if (event.key === 'm' || event.key === 'M') {
+      const target = event.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return;
+      }
+      event.preventDefault();
+      this.toggleMobileMenu();
+    }
   }
 
   openParticipantStats() {

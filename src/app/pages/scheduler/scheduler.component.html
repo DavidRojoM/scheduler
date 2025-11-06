@@ -1,6 +1,6 @@
-<main class="flex flex-col gap-2 overflow-x-auto h-screen touch-pan-x">
-  <div
-    class="flex flex-row gap-3 w-full bg-gray-800 p-3 sticky top-0 left-0 z-50 shadow-lg"
+<main class="flex flex-col overflow-x-auto h-dvh touch-pan-x">
+  <nav
+    class="h-[80px] flex flex-row gap-3 w-full bg-gray-800 p-3 sticky top-0 left-0 z-50 shadow-lg mb-[16px]"
   >
     <button
       (click)="toggleMobileMenu()"
@@ -20,16 +20,15 @@
       <i class="ph ph-plus text-xl"></i>
       <span class="hidden md:block">Add Column</span>
     </button>
-  </div>
+  </nav>
 
   @if (mobileMenuOpen) {
   <div
-    class="fixed inset-0 top-[60px] bg-black bg-opacity-10 z-40"
+    class="fixed inset-0 bg-black bg-opacity-10 z-40"
     (click)="closeMobileMenu()"
   >
     <div
-      class="bg-gray-800 p-4 flex flex-col gap-2 shadow-2xl border-b border-gray-700 max-w-md"
-      (click)="$event.stopPropagation()"
+      class="fixed top-[77px] bg-gray-800 p-3 flex flex-col gap-2 shadow-lg max-w-md"
     >
       <button
         (click)="open(wipeConfirmation); closeMobileMenu()"
@@ -84,7 +83,7 @@
     </div>
   </div>
   }
-  <div class="p-3 overflow-x-auto">
+  <div class="px-3 overflow-x-auto">
     <div
       cdkDropList
       cdkDropListOrientation="horizontal"
