@@ -69,17 +69,6 @@
   }
 }
 
-// Scroll snap for columns
-.overflow-x-auto {
-  scroll-snap-type: x mandatory;
-  scroll-padding: 0 12px;
-}
-
-.flex.flex-col.divide-y {
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
-}
-
 @media (max-width: 768px) {
   main {
     -webkit-overflow-scrolling: touch;
@@ -97,5 +86,16 @@
 
   .hidden {
     display: none !important;
+  }
+
+  // Scroll snap for columns
+  .overflow-x-auto {
+    scroll-snap-type: x mandatory;
+    scroll-padding: 0 12px;
+  }
+
+  .flex.flex-col.divide-y {
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
   }
 }
