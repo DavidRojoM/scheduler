@@ -56,7 +56,7 @@
         class="flex flex-row gap-3 items-center px-4 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 transition-all text-white font-medium shadow-sm"
       >
         <i class="ph ph-share-network text-xl"></i>
-        <span>Export</span>
+        <span>Share</span>
       </button>
       <button
         (click)="open(importModal); closeMobileMenu()"
@@ -83,7 +83,7 @@
     </div>
   </div>
   }
-  <div class="mx-3 overflow-x-auto">
+  <div class="mx-3 overflow-x-auto h-full">
     <div
       cdkDropList
       cdkDropListOrientation="horizontal"
@@ -162,6 +162,10 @@
             </button>
           </div>
         </ng-template>
+        } @empty {
+        <p class="text-gray-500 text-center">
+          No columns yet. Click "Add Column" to create one.
+        </p>
         }
       </form>
     </div>
@@ -199,7 +203,7 @@
 
 <ng-template #exportModal let-modal>
   <div class="modal-header">
-    <h4 class="modal-title" id="modal-export-title">Export</h4>
+    <h4 class="modal-title" id="modal-export-title">Share</h4>
     <button
       type="button"
       class="btn-close"

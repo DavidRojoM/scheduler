@@ -4,29 +4,35 @@ import { ModalHeaderComponent } from '../../../../../shared/ui/components/modals
 import { SharedModule } from '../../../../../shared/shared.module';
 import { TasksService } from '../../../../../shared/services/tasks.service';
 import { ParticipantsService } from '../../../../../shared/services/participants.service';
+import { ColumnsService } from '../../../../../shared/services/columns.service';
 import { take } from 'rxjs';
-import { FormatTimePipe } from '../../../../../shared/pipes/format-time.pipe';
-
-interface ParticipantStats {
-  name: string;
-  totalMinutes: number;
-}
+import {
+  ParticipantItemComponent,
+  ParticipantStats,
+} from './components/participant-item/participant-item.component';
+import { Task } from './components/task-list-item/task-list-item.component';
 
 @Component({
   selector: 'sch-participant-stats-modal',
   templateUrl: './participant-stats-modal.component.html',
   styleUrl: './participant-stats-modal.component.scss',
   standalone: true,
-  imports: [ModalHeaderComponent, SharedModule, FormatTimePipe],
+  imports: [ModalHeaderComponent, SharedModule, ParticipantItemComponent],
 })
 export class ParticipantStatsModalComponent implements OnInit {
-  modalTitle = 'Participant Statistics';
   participantStats: ParticipantStats[] = [];
+  private scrollToParticipant: string | null = null;
+
+  get modalTitle(): string {
+    const count = this.participantStats.length;
+    return `Participant Statistics (${count})`;
+  }
 
   constructor(
     public activeModal: NgbActiveModal,
     private tasksService: TasksService,
-    private participantsService: ParticipantsService
+    private participantsService: ParticipantsService,
+    private columnsService: ColumnsService
   ) {}
 
   ngOnInit(): void {
@@ -35,24 +41,74 @@ export class ParticipantStatsModalComponent implements OnInit {
 
   private calculateParticipantStats(): void {
     this.tasksService.tasks$.pipe(take(1)).subscribe((tasks) => {
-      const hoursMap = new Map<string, number>();
+      const columns = this.columnsService.columns;
+      const participantMap = new Map<
+        string,
+        { totalMinutes: number; tasks: Task[] }
+      >();
+
+      const expandedStates = new Map<string, boolean>();
+      this.participantStats.forEach((stat) => {
+        expandedStates.set(stat.name, stat.isExpanded);
+      });
+
+      this.participantsService.participants$
+        .pipe(take(1))
+        .subscribe((participants) => {
+          participants.forEach((participant) => {
+            participantMap.set(participant.name, {
+              totalMinutes: 0,
+              tasks: [],
+            });
+          });
+        });
 
       tasks.forEach((task) => {
         const durationMs = task.end.getTime() - task.start.getTime();
-        const durationHours = durationMs / (1000 * 60 * 60);
+        const durationMinutes = Math.round(durationMs / (1000 * 60));
+        const column = columns.find((col) => col.id === task.columnId);
 
         task.participants.forEach((participant) => {
-          const currentHours = hoursMap.get(participant) || 0;
-          hoursMap.set(participant, currentHours + durationHours);
+          if (!participantMap.has(participant)) {
+            participantMap.set(participant, { totalMinutes: 0, tasks: [] });
+          }
+
+          const participantData = participantMap.get(participant)!;
+          participantData.totalMinutes += durationMinutes;
+          participantData.tasks.push({
+            id: task.id,
+            columnId: task.columnId,
+            title: task.title,
+            start: task.start,
+            end: task.end,
+            columnTitle: column?.title || 'Unknown',
+            durationMinutes: durationMinutes,
+          });
         });
       });
 
-      this.participantStats = Array.from(hoursMap.entries())
-        .map(([name, totalHours]) => ({
+      this.participantStats = Array.from(participantMap.entries())
+        .map(([name, data]) => ({
           name,
-          totalMinutes: Math.round(totalHours * 60),
+          totalMinutes: data.totalMinutes,
+          tasks: data.tasks.sort(
+            (a, b) => a.start.getTime() - b.start.getTime()
+          ),
+          isExpanded: expandedStates.get(name) || false,
         }))
         .sort((a, b) => b.totalMinutes - a.totalMinutes);
+
+      if (this.scrollToParticipant) {
+        setTimeout(() => {
+          const element = document.getElementById(
+            `participant-${this.scrollToParticipant}`
+          );
+          if (element) {
+            element.scrollIntoView({ behavior: 'instant', block: 'nearest' });
+          }
+          this.scrollToParticipant = null;
+        }, 0);
+      }
     });
   }
 
@@ -80,6 +136,32 @@ export class ParticipantStatsModalComponent implements OnInit {
 
       this.calculateParticipantStats();
     }
+  }
+
+  onRemoveParticipantFromTask(event: {
+    participantName: string;
+    taskId: string;
+  }): void {
+    this.scrollToParticipant = event.participantName;
+    this.tasksService.tasks$.pipe(take(1)).subscribe((tasks) => {
+      const task = tasks.find((t) => t.id === event.taskId);
+      if (!task) {
+        return;
+      }
+
+      const updatedTask = {
+        ...task,
+        participants: task.participants.filter(
+          (p) => p !== event.participantName
+        ),
+      };
+      this.tasksService.updateTask(updatedTask);
+      this.calculateParticipantStats();
+    });
+  }
+
+  onToggleParticipant(participant: ParticipantStats): void {
+    participant.isExpanded = !participant.isExpanded;
   }
 
   close(): void {

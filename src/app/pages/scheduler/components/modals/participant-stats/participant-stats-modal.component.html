@@ -11,21 +11,13 @@
   } @else {
     <div class="space-y-2">
       @for (stat of participantStats; track stat.name) {
-        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
-          <div class="flex-1">
-            <div class="font-medium text-gray-900">{{ stat.name }}</div>
-            <div class="text-sm text-gray-600">
-              {{ stat.totalMinutes | formatTime }}
-            </div>
-          </div>
-          <button
-            type="button"
-            class="ml-4 px-3 py-1.5 text-sm font-medium text-white bg-red-600 rounded hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition"
-            (click)="deleteParticipant(stat.name)"
-          >
-            Delete
-          </button>
-        </div>
+        <sch-participant-item
+          [participant]="stat"
+          [id]="'participant-' + stat.name"
+          (delete)="deleteParticipant($event)"
+          (removeFromTask)="onRemoveParticipantFromTask($event)"
+          (toggleExpanded)="onToggleParticipant(stat)"
+        />
       }
     </div>
   }

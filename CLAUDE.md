@@ -1,0 +1,124 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+This is an Angular 18 scheduler application for creating and managing daily schedules with participants. The app allows users to create columns (places/locations), schedule tasks within those columns, assign participants to tasks, and export individual participant schedules as PDFs.
+
+## Development Commands
+
+### Starting Development Server
+```bash
+npm start              # Start dev server on localhost:4200
+npm run start:host     # Start dev server accessible on network (0.0.0.0)
+```
+
+### Building
+```bash
+npm run build          # Production build to dist/scheduler
+npm run watch          # Development build with watch mode
+```
+
+### Testing
+```bash
+npm test              # Run Karma/Jasmine tests
+```
+
+## Architecture
+
+### Core Data Model
+
+The application has three main entities stored in localStorage:
+
+1. **Columns**: Represent places/locations (e.g., rooms, stages)
+   - Structure: `{ id: string, title: string }`
+   - Draggable/reorderable
+
+2. **Tasks**: Scheduled events assigned to columns
+   - Structure: `{ id: string, columnId: string, title: string, start: Date, end: Date, participants: string[] }`
+   - Stored as time-only (hours/minutes) since the scheduler doesn't support fixed days
+   - Draggable and resizable within the calendar view
+
+3. **Participants**: List of people who can be assigned to tasks
+   - Structure: `string[]` (array of names)
+
+### Service Layer Architecture
+
+**State Management Services** (all use RxJS BehaviorSubject pattern):
+- `TasksService`: Manages task CRUD operations and syncs with ConfigService
+- `ColumnsService`: Manages column CRUD operations and ordering
+- `ParticipantsService`: Manages participant list
+
+**Persistence Layer**:
+- `ConfigService`: Acts as the main interface to LocalstorageService, handles date serialization/deserialization
+- `LocalstorageService`: Low-level localStorage operations with three scopes: columns, tasks, participants
+
+**Export/Import Services**:
+- `ExportService`: Generates participant-specific PDFs using @pdfme/generator, creates screenshots using html-to-image, and packages multiple PDFs into ZIP files using @zip.js/zip.js
+- `ShareService`: Exports/imports config as base64-encoded JSON for sharing schedules
+
+**UI/UX Services**:
+- `MobileDetectionService`: Detects mobile devices (touch screen + small viewport or mobile user agent) with reactive resize handling
+- `LogoService`: Manages custom SVG logo upload/storage with DOMPurify sanitization to prevent XSS
+
+### Component Structure
+
+```
+app/
+├── pages/
+│   └── scheduler/
+│       ├── scheduler.component.ts       # Main container with column management
+│       └── components/
+│           ├── schedule/
+│           │   ├── schedule.component.ts     # Calendar view per column (angular-calendar)
+│           │   └── date-formatter.ts         # Custom 24h time formatting
+│           └── modals/
+│               └── task/
+│                   └── task-modal.component.ts  # Task creation/editing modal
+└── shared/
+    ├── services/                        # All injectable services
+    ├── constants/
+    │   ├── config.ts                    # Day hours: 6-21, 6 segments/hour (10min intervals)
+    │   └── task.colors.ts               # Color scheme for tasks
+    └── ui/components/modals/
+        └── modal-header/                # Reusable modal header component
+```
+
+### Key Libraries
+
+- **angular-calendar**: Day view scheduler with drag-and-drop and resize
+- **@ng-bootstrap/ng-bootstrap**: Modal dialogs
+- **@pdfme/generator**: PDF generation for participant schedules
+- **html-to-image**: Screenshot capture of the schedule
+- **@zip.js/zip.js**: Bundling multiple PDFs into a zip file
+- **date-fns**: Date manipulation
+- **dompurify**: SVG sanitization for logo uploads
+- **TailwindCSS**: Utility-first styling
+
+### Important Technical Details
+
+1. **Time-Only Scheduling**: Tasks are stored as hours/minutes only because angular-calendar-scheduler doesn't support fixed-day scheduling. Dates are always set to "today" when rendering.
+
+2. **Component Prefix**: Use `sch-` prefix for all component selectors (configured in angular.json).
+
+3. **Drag and Drop**:
+   - Columns use Angular CDK drag-drop
+   - Tasks use angular-calendar's built-in drag/resize
+
+4. **Export Functionality**:
+   - Whole schedule: Screenshot as PNG
+   - Per participant: Filtered schedules as PDFs in a ZIP file
+   - Share: Base64-encoded JSON config for import/export
+
+5. **Localization**: Spanish locale (es) registered for date formatting.
+
+## Future Development Notes
+
+From README.md future features:
+- Refactor the whole codebase
+- Add websockets support (for real-time collaboration)
+- Add proper alerts and error handling
+
+Known TODO comments in code:
+- Add schema validations for localStorage data (localstorage.service.ts:93)
