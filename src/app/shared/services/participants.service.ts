@@ -45,6 +45,34 @@ export class ParticipantsService {
       name: participant,
     }));
     this._participants$.next(this._participants);
+
+    this.rebuildParticipantsFromTasks();
+  }
+
+  private rebuildParticipantsFromTasks(): void {
+    const storedConfig = this.configService.getConfig();
+
+    const participantNamesInTasks = new Set<string>();
+    storedConfig.tasks.forEach((task) => {
+      task.participants.forEach((participantName) => {
+        participantNamesInTasks.add(participantName);
+      });
+    });
+
+    let needsUpdate = false;
+    participantNamesInTasks.forEach((name) => {
+      if (!this.hasParticipant(name)) {
+        this._participants.push({ name });
+        needsUpdate = true;
+      }
+    });
+
+    if (needsUpdate) {
+      this._participants$.next(this._participants);
+      this.configService.setParticipants(
+        this._participants.map((participant) => participant.name)
+      );
+    }
   }
 
   deleteParticipant(name: string): void {

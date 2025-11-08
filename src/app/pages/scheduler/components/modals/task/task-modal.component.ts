@@ -272,13 +272,18 @@ export class TaskModalComponent implements OnInit {
 
   updateParticipantsWithConflictInfo(): void {
     const participants = this.participantsService.participants;
-    this.participantsWithConflictInfo = participants.map((p) => ({
-      name: p.name,
-      isConflicted: this.conflictedParticipants.has(p.name),
-      displayName: this.conflictedParticipants.has(p.name)
-        ? `⚠️ ${p.name}`
-        : p.name,
-    }));
+    this.participantsWithConflictInfo = participants
+      .map((p) => ({
+        name: p.name,
+        isConflicted: this.conflictedParticipants.has(p.name),
+        displayName: this.conflictedParticipants.has(p.name)
+          ? `⚠️ ${p.name}`
+          : p.name,
+      }))
+      .sort((a, b) => {
+        if (a.isConflicted === b.isConflicted) return 0;
+        return a.isConflicted ? 1 : -1;
+      });
   }
 
   isParticipantConflicted(participant: string): boolean {

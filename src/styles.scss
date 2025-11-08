@@ -36,6 +36,10 @@
   border: 1px solid #ffffff;
 }
 
+.modal-content {
+  @apply max-h-[90dvh] flex flex-col;
+}
+
 @media (max-width: 768px) {
   html,
   body {

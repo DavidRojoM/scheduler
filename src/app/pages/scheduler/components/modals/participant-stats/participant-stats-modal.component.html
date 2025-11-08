@@ -23,7 +23,25 @@
   }
 </div>
 
-<div class="modal-footer">
+<div class="modal-footer flex justify-between items-center">
+  <div class="flex gap-2 items-center flex-1">
+    <input
+      #newParticipantInput
+      type="text"
+      class="form-control"
+      placeholder="Add new participant..."
+      [(ngModel)]="newParticipantName"
+      (keyup.enter)="addParticipant()"
+    />
+    <button
+      type="button"
+      class="btn btn-primary"
+      (click)="addParticipant()"
+      [disabled]="!newParticipantName.trim()"
+    >
+      Add
+    </button>
+  </div>
   <button
     type="button"
     class="btn btn-secondary"

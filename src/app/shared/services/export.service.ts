@@ -10,7 +10,7 @@ import {
   BlobReader,
 } from '@zip.js/zip.js';
 import { toBlob } from 'html-to-image';
-import { LogoService } from './logo.service';
+import { ProjectService } from './project.service';
 
 interface ExportConfig {
   columns: {
@@ -49,10 +49,10 @@ type PdfScheduleTuple = [Hour, Place, Description];
   providedIn: 'root',
 })
 export class ExportService {
-  constructor(private readonly logoService: LogoService) {}
+  constructor(private readonly projectService: ProjectService) {}
 
   private getParticipantTemplate(): Template {
-    const logo = this.logoService.getLogo();
+    const logo = this.projectService.currentProject?.config.logo;
 
     const baseSchemas: any[] = [
       {
@@ -186,7 +186,7 @@ export class ExportService {
         .filter((task) => task.participants.includes(participant.name))
         .sort((a, b) => a.start.getTime() - b.start.getTime());
 
-      if (!tasksOfParticipant) {
+      if (!tasksOfParticipant.length) {
         continue;
       }
 
@@ -226,6 +226,7 @@ export class ExportService {
     }
 
     if (!generatedSchedules.length) {
+      alert('No schedules to export. Make sure you have participants with assigned tasks.');
       return;
     }
 

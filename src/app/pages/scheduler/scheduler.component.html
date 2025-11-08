@@ -1,25 +1,39 @@
 <main class="flex flex-col overflow-x-auto h-dvh touch-pan-x">
   <nav
-    class="h-[80px] flex flex-row gap-3 w-full bg-gray-800 p-3 sticky top-0 left-0 z-50 shadow-lg mb-[16px]"
+    class="h-[80px] flex flex-row justify-between items-center gap-3 w-full bg-gray-800 p-3 sticky top-0 left-0 z-50 shadow-lg mb-[16px]"
   >
-    <button
-      (click)="toggleMobileMenu()"
-      class="flex items-center justify-center px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition-all cursor-pointer border border-gray-600 shadow-sm"
-    >
-      <i
-        class="ph text-xl text-white"
-        [class.ph-list]="!mobileMenuOpen"
-        [class.ph-x]="mobileMenuOpen"
-      ></i>
-    </button>
+    <div class="flex items-center gap-3">
+      <button
+        (click)="toggleMobileMenu()"
+        class="fflex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-700 transition-all cursor-pointer text-white"
+      >
+        <i
+          class="ph text-xl text-white"
+          [class.ph-list]="!mobileMenuOpen"
+          [class.ph-x]="mobileMenuOpen"
+        ></i>
+      </button>
 
-    <button
-      (click)="addColumn()"
-      class="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition-all cursor-pointer shadow-sm text-white font-medium"
-    >
-      <i class="ph ph-plus text-xl"></i>
-      <span class="hidden md:block">Add Column</span>
-    </button>
+      <button
+        (click)="addColumn()"
+        class="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition-all cursor-pointer shadow-sm text-white font-medium"
+      >
+        <i class="ph ph-plus text-xl"></i>
+        <span class="hidden md:block">Add Column</span>
+      </button>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <sch-project-switcher></sch-project-switcher>
+
+      <button
+        (click)="openSettings()"
+        class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-700 transition-all cursor-pointer text-white"
+        title="Settings"
+      >
+        <i class="ph ph-gear text-xl"></i>
+      </button>
+    </div>
   </nav>
 
   @if (mobileMenuOpen) {
@@ -28,7 +42,7 @@
     (click)="closeMobileMenu()"
   >
     <div
-      class="fixed top-[77px] bg-gray-800 p-3 flex flex-col gap-2 shadow-lg max-w-md"
+      class="fixed top-[76px] bg-gray-800 p-3 flex flex-col gap-2 shadow-lg max-w-md"
     >
       <button
         (click)="open(wipeConfirmation); closeMobileMenu()"
@@ -65,14 +79,6 @@
         <i class="ph ph-download-simple text-xl"></i>
         <span>Import</span>
       </button>
-      <button
-        (click)="open(logoModal); closeMobileMenu()"
-        class="flex flex-row gap-3 items-center px-4 py-3 rounded-lg bg-purple-600 hover:bg-purple-700 transition-all text-white font-medium shadow-sm"
-      >
-        <i class="ph ph-image text-xl"></i>
-        <span>Logo</span>
-      </button>
-
       <button
         (click)="openParticipantStats(); closeMobileMenu()"
         class="flex flex-row gap-3 items-center px-4 py-3 rounded-lg bg-purple-600 hover:bg-purple-700 transition-all text-white font-medium shadow-sm"
@@ -264,59 +270,6 @@
       (click)="modal.dismiss()"
     >
       Cancel
-    </button>
-  </div>
-</ng-template>
-
-<ng-template #logoModal let-modal>
-  <div class="modal-header">
-    <h4 class="modal-title" id="modal-logo-title">PDF Logo</h4>
-    <button
-      type="button"
-      class="btn-close"
-      aria-label="Close"
-      (click)="modal.dismiss()"
-    ></button>
-  </div>
-  <div class="modal-body flex flex-col gap-4">
-    <div class="flex flex-col gap-2">
-      <span class="font-semibold">Upload Logo (SVG only)</span>
-      <input
-        type="file"
-        accept=".svg,image/svg+xml"
-        (change)="onLogoFileSelected($event)"
-        class="border rounded-md px-2 py-1"
-        #logoInput
-      />
-      <p class="text-sm text-gray-600">
-        This logo will appear at the top of exported PDFs for participants.
-      </p>
-    </div>
-
-    @if (logoPreview) {
-    <div class="flex flex-col gap-2">
-      <span class="font-semibold">Current Logo</span>
-      <div
-        class="border rounded-md p-4 bg-gray-50 flex justify-center"
-        [innerHTML]="logoPreview"
-      ></div>
-      <button type="button" class="btn btn-danger w-fit" (click)="removeLogo()">
-        Remove Logo
-      </button>
-    </div>
-    } @else {
-    <div class="text-sm text-gray-500 italic">
-      No logo uploaded. PDFs will be generated without a logo.
-    </div>
-    }
-  </div>
-  <div class="modal-footer">
-    <button
-      type="button"
-      class="btn btn-outline-secondary"
-      (click)="modal.dismiss()"
-    >
-      Close
     </button>
   </div>
 </ng-template>

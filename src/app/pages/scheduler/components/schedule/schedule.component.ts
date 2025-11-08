@@ -22,15 +22,10 @@ import { TaskModalComponent } from '../modals/task/task-modal.component';
 import { v4 } from 'uuid';
 import { TasksService } from '../../../../shared/services/tasks.service';
 import { MobileDetectionService } from '../../../../shared/services/mobile-detection.service';
-import {
-  TASK_COLORS,
-  DAY_END_HOUR,
-  DAY_START_HOUR,
-  SEGMENTS_BY_HOUR,
-} from '../../../../shared/constants';
+import { TASK_COLORS } from '../../../../shared/constants';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { CustomDateFormatter } from './date-formatter';
-import { isBefore } from 'date-fns';
+import { CustomDateFormatter } from '../../../../shared/utils/date-formatter';
+import { ProjectService } from '../../../../shared/services/project.service';
 
 interface Task {
   id: string;
@@ -79,9 +74,9 @@ interface Task {
 export class ScheduleComponent implements OnInit, AfterViewInit {
   @ViewChild('modalContent', { static: true }) modalContent!: TemplateRef<any>;
 
-  hourSegments = SEGMENTS_BY_HOUR;
-  dayStartHour = DAY_START_HOUR;
-  dayEndHour = DAY_END_HOUR;
+  hourSegments: number = 6;
+  dayStartHour: number = 6;
+  dayEndHour: number = 21;
 
   columnId = input.required<string>();
 
@@ -119,9 +114,16 @@ export class ScheduleComponent implements OnInit, AfterViewInit {
     private readonly tasksService: TasksService,
     private readonly destroyRef: DestroyRef,
     private readonly mobileDetectionService: MobileDetectionService,
-    private readonly elementRef: ElementRef
+    private readonly elementRef: ElementRef,
+    private readonly projectService: ProjectService
   ) {}
+
   ngOnInit(): void {
+    const config = this.projectService.getProjectConfig();
+    this.hourSegments = config.segmentsByHour;
+    this.dayStartHour = config.dayStartHour;
+    this.dayEndHour = config.dayEndHour;
+
     this.tasksService.tasks$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((allTasks) => {

@@ -1,29 +1,41 @@
-<div class="bg-gray-50 rounded-lg overflow-hidden" [attr.id]="id">
-  <div class="flex items-center justify-between p-3 hover:bg-gray-100 transition">
-    <button
-      type="button"
-      class="flex-1 flex items-center gap-2 text-left"
-      (click)="onToggleExpanded()"
-    >
+<div
+  class="bg-gray-50 rounded-lg overflow-hidden cursor-pointer"
+  [attr.id]="id"
+  (click)="onToggleExpanded()"
+>
+  <div
+    class="participant-header"
+  >
+    <div class="participant-content">
       <svg
-        class="w-5 h-5 text-gray-600 transition-transform duration-200"
+        class="chevron-icon"
         [class.rotate-90]="participant.isExpanded"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
       >
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M9 5l7 7-7 7"
+        />
       </svg>
-      <div class="flex-1">
-        <div class="font-medium text-gray-900">{{ participant.name }}</div>
-        <div class="text-sm text-gray-600">
-          {{ participant.totalMinutes | formatTime }} • {{ participant.tasks.length }} task{{ participant.tasks.length !== 1 ? 's' : '' }}
+      <div class="flex-1 min-w-0 overflow-hidden">
+        <div class="font-medium text-gray-900 participant-name-wrapper">
+          <span class="participant-name-scroll" schScrollableText>{{ participant.name }}</span>
+        </div>
+        <div class="participant-info">
+          {{ participant.totalMinutes | formatTime }} •
+          {{ participant.tasks.length }} task{{
+            participant.tasks.length !== 1 ? "s" : ""
+          }}
         </div>
       </div>
-    </button>
+    </div>
     <button
       type="button"
-      class="ml-4 px-3 py-1.5 text-sm font-medium text-white bg-red-600 rounded hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition"
+      class="delete-button"
       (click)="onDelete()"
     >
       Delete
@@ -31,21 +43,16 @@
   </div>
 
   @if (participant.isExpanded) {
-    <div class="px-3 pb-3 border-t border-gray-200">
-      @if (participant.tasks.length === 0) {
-        <div class="py-4 text-sm text-gray-500 text-center">
-          No tasks assigned
-        </div>
-      } @else {
-        <div class="space-y-2 mt-3">
-          @for (task of participant.tasks; track task.id) {
-            <sch-task-list-item
-              [task]="task"
-              (remove)="onRemoveFromTask($event)"
-            />
-          }
-        </div>
+  <div class="participant-expanded">
+    @if (participant.tasks.length === 0) {
+    <div class="py-4 text-sm text-gray-500 text-center">No tasks assigned</div>
+    } @else {
+    <div class="space-y-2 mt-3">
+      @for (task of participant.tasks; track task.id) {
+      <sch-task-list-item [task]="task" (remove)="onRemoveFromTask($event)" />
       }
     </div>
+    }
+  </div>
   }
 </div>

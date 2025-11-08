@@ -22,6 +22,7 @@ import { Task } from './components/task-list-item/task-list-item.component';
 export class ParticipantStatsModalComponent implements OnInit {
   participantStats: ParticipantStats[] = [];
   private scrollToParticipant: string | null = null;
+  newParticipantName = '';
 
   get modalTitle(): string {
     const count = this.participantStats.length;
@@ -162,6 +163,22 @@ export class ParticipantStatsModalComponent implements OnInit {
 
   onToggleParticipant(participant: ParticipantStats): void {
     participant.isExpanded = !participant.isExpanded;
+  }
+
+  addParticipant(): void {
+    const trimmedName = this.newParticipantName.trim();
+    if (!trimmedName) {
+      return;
+    }
+
+    if (this.participantsService.hasParticipant(trimmedName)) {
+      alert(`The participant "${trimmedName}" already exists.`);
+      return;
+    }
+
+    this.participantsService.addParticipant(trimmedName);
+    this.newParticipantName = '';
+    this.calculateParticipantStats();
   }
 
   close(): void {

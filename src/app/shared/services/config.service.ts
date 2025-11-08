@@ -110,7 +110,7 @@ export class ConfigService {
 
     return {
       columns: config.columns,
-      participants: JSON.parse(localStorage.getItem('participants') || '[]'),
+      participants: config.participants,
       tasks: config.tasks.map((task) => {
         const start = new Date();
         const end = new Date();

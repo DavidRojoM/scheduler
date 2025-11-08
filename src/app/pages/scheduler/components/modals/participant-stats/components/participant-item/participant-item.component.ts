@@ -2,6 +2,7 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormatTimePipe } from '../../../../../../../shared/pipes/format-time.pipe';
 import { TaskListItemComponent, Task } from '../task-list-item/task-list-item.component';
+import { ScrollableTextDirective } from '../../../../../../../shared/directives/scrollable-text.directive';
 
 export interface ParticipantStats {
   name: string;
@@ -13,7 +14,7 @@ export interface ParticipantStats {
 @Component({
   selector: 'sch-participant-item',
   standalone: true,
-  imports: [CommonModule, FormatTimePipe, TaskListItemComponent],
+  imports: [CommonModule, FormatTimePipe, TaskListItemComponent, ScrollableTextDirective],
   templateUrl: './participant-item.component.html',
   styleUrl: './participant-item.component.scss'
 })

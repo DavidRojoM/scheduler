@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Injector } from '@angular/core';
+import { ProjectService } from './project.service';
 
 interface StoredTask {
   id: string;
@@ -32,6 +33,26 @@ type SetConfig =
   providedIn: 'root',
 })
 export class LocalstorageService {
+  private projectService?: ProjectService;
+
+  constructor(private injector: Injector) {}
+
+  private getProjectKey(scope: string): string {
+    try {
+      if (!this.projectService) {
+        this.projectService = this.injector.get(ProjectService);
+      }
+      const projectId = this.projectService?.currentProject?.id || 'default';
+      return `${projectId}_${scope}`;
+    } catch {
+      const currentProjectId = localStorage.getItem(
+        'scheduler_current_project_id'
+      );
+      return currentProjectId
+        ? `${currentProjectId}_${scope}`
+        : `default_${scope}`;
+    }
+  }
   setAll(config: {
     columns: StoredColumn[];
     tasks: StoredTask[];
@@ -57,15 +78,21 @@ export class LocalstorageService {
   }
 
   private setTasks(tasks: StoredTask[]) {
-    localStorage.setItem('tasks', JSON.stringify(tasks));
+    localStorage.setItem(this.getProjectKey('tasks'), JSON.stringify(tasks));
   }
 
   private setParticipants(participants: string[]) {
-    localStorage.setItem('participants', JSON.stringify(participants));
+    localStorage.setItem(
+      this.getProjectKey('participants'),
+      JSON.stringify(participants)
+    );
   }
 
   private setColumns(columns: StoredColumn[]) {
-    localStorage.setItem('columns', JSON.stringify(columns));
+    localStorage.setItem(
+      this.getProjectKey('columns'),
+      JSON.stringify(columns)
+    );
   }
 
   findAll(): {
@@ -74,31 +101,35 @@ export class LocalstorageService {
     participants: string[];
   } {
     try {
-      const storedColumns = localStorage.getItem('columns');
-      const storedTasks = localStorage.getItem('tasks');
-      const storedParticipants = localStorage.getItem('participants');
+      const columnsKey = this.getProjectKey('columns');
+      const tasksKey = this.getProjectKey('tasks');
+      const participantsKey = this.getProjectKey('participants');
+
+      const storedColumns = localStorage.getItem(columnsKey);
+      const storedTasks = localStorage.getItem(tasksKey);
+      const storedParticipants = localStorage.getItem(participantsKey);
 
       if (!storedColumns) {
-        localStorage.setItem('columns', JSON.stringify([]));
+        localStorage.setItem(columnsKey, JSON.stringify([]));
       }
 
       if (!storedTasks) {
-        localStorage.setItem('tasks', JSON.stringify([]));
+        localStorage.setItem(tasksKey, JSON.stringify([]));
       }
 
       if (!storedParticipants) {
-        localStorage.setItem('participants', JSON.stringify([]));
+        localStorage.setItem(participantsKey, JSON.stringify([]));
       }
 
       // TODO(David): add schema validations
       return {
         columns: JSON.parse(
-          localStorage.getItem('columns') || '[]'
+          localStorage.getItem(columnsKey) || '[]'
         ) as StoredColumn[],
         tasks: JSON.parse(
-          localStorage.getItem('tasks') || '[]'
+          localStorage.getItem(tasksKey) || '[]'
         ) as StoredTask[],
-        participants: JSON.parse(localStorage.getItem('participants') || '[]'),
+        participants: JSON.parse(localStorage.getItem(participantsKey) || '[]'),
       };
     } catch (error) {
       console.error('Error parsing data from localstorage', error);

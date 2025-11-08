@@ -8,7 +8,6 @@ import {
   ViewChild,
   ViewEncapsulation,
 } from '@angular/core';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
   CdkDragDrop,
   CdkDrag,
@@ -36,7 +35,8 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfigService } from '../../shared/services/config.service';
 import { MobileDetectionService } from '../../shared/services/mobile-detection.service';
 import { ParticipantStatsModalComponent } from './components/modals/participant-stats/participant-stats-modal.component';
-import { LogoService } from '../../shared/services/logo.service';
+import { SettingsComponent } from './components/modals/settings/settings.component';
+import { ProjectSwitcherComponent } from './components/project-switcher/project-switcher.component';
 
 @Component({
   selector: 'sch-scheduler',
@@ -52,6 +52,7 @@ import { LogoService } from '../../shared/services/logo.service';
     ScheduleComponent,
     FormsModule,
     ReactiveFormsModule,
+    ProjectSwitcherComponent,
   ],
 })
 export class SchedulerComponent implements OnInit {
@@ -75,7 +76,6 @@ export class SchedulerComponent implements OnInit {
   get isMobile(): boolean {
     return this.mobileDetectionService.isMobile;
   }
-  logoPreview: SafeHtml | null = null;
 
   constructor(
     private readonly columnsService: ColumnsService,
@@ -83,8 +83,6 @@ export class SchedulerComponent implements OnInit {
     private readonly participantsService: ParticipantsService,
     private readonly configService: ConfigService,
     private readonly exportService: ExportService,
-    private readonly logoService: LogoService,
-    private readonly sanitizer: DomSanitizer,
     private readonly destroyRef: DestroyRef,
     private readonly modal: NgbModal,
     private readonly mobileDetectionService: MobileDetectionService
@@ -105,15 +103,6 @@ export class SchedulerComponent implements OnInit {
             title: column.title as string,
           }))
         );
-      });
-
-    this.logoService
-      .getLogo$()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((logo) => {
-        this.logoPreview = logo
-          ? this.sanitizer.bypassSecurityTrustHtml(logo)
-          : null;
       });
   }
 
@@ -200,19 +189,23 @@ export class SchedulerComponent implements OnInit {
     this.columnsService.wipeColumns();
     this.tasksService.wipeTasks();
     this.participantsService.wipeParticipants();
-    this.logoService.removeLogo();
   }
 
-  exportAndDownload() {
-    const columns = this.columnsService.columns;
-    const tasks = this.tasksService.tasks;
-    const participants = this.participantsService.participants;
+  async exportAndDownload() {
+    try {
+      const columns = this.columnsService.columns;
+      const tasks = this.tasksService.tasks;
+      const participants = this.participantsService.participants;
 
-    this.exportService.exportParticipantSchedules({
-      columns,
-      tasks,
-      participants,
-    });
+      await this.exportService.exportParticipantSchedules({
+        columns,
+        tasks,
+        participants,
+      });
+    } catch (error) {
+      console.error('Error exporting participant schedules:', error);
+      alert('Error exporting schedules. Check console for details.');
+    }
   }
 
   open(content: TemplateRef<any>) {
@@ -266,7 +259,11 @@ export class SchedulerComponent implements OnInit {
 
     if (event.key === 'm' || event.key === 'M') {
       const target = event.target as HTMLElement;
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable
+      ) {
         return;
       }
       event.preventDefault();
@@ -281,34 +278,10 @@ export class SchedulerComponent implements OnInit {
     });
   }
 
-  onLogoFileSelected(event: Event) {
-    const input = event.target as HTMLInputElement;
-    if (!input.files || input.files.length === 0) {
-      return;
-    }
-
-    const file = input.files[0];
-
-    if (!file.type.includes('svg')) {
-      alert('Please upload an SVG file');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const svgContent = e.target?.result as string;
-      this.logoService.setLogo(svgContent);
-    };
-    reader.readAsText(file);
-
-    input.value = '';
-  }
-
-  removeLogo() {
-    this.logoService.removeLogo();
-  }
-
-  get hasLogo(): boolean {
-    return this.logoService.hasLogo();
+  openSettings() {
+    this.modal.open(SettingsComponent, {
+      size: 'lg',
+      ariaLabelledBy: 'settings-modal',
+    });
   }
 }

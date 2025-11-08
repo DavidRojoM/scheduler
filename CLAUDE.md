@@ -9,18 +9,21 @@ This is an Angular 18 scheduler application for creating and managing daily sche
 ## Development Commands
 
 ### Starting Development Server
+
 ```bash
 npm start              # Start dev server on localhost:4200
 npm run start:host     # Start dev server accessible on network (0.0.0.0)
 ```
 
 ### Building
+
 ```bash
 npm run build          # Production build to dist/scheduler
 npm run watch          # Development build with watch mode
 ```
 
 ### Testing
+
 ```bash
 npm test              # Run Karma/Jasmine tests
 ```
@@ -32,10 +35,12 @@ npm test              # Run Karma/Jasmine tests
 The application has three main entities stored in localStorage:
 
 1. **Columns**: Represent places/locations (e.g., rooms, stages)
+
    - Structure: `{ id: string, title: string }`
    - Draggable/reorderable
 
 2. **Tasks**: Scheduled events assigned to columns
+
    - Structure: `{ id: string, columnId: string, title: string, start: Date, end: Date, participants: string[] }`
    - Stored as time-only (hours/minutes) since the scheduler doesn't support fixed days
    - Draggable and resizable within the calendar view
@@ -46,19 +51,23 @@ The application has three main entities stored in localStorage:
 ### Service Layer Architecture
 
 **State Management Services** (all use RxJS BehaviorSubject pattern):
+
 - `TasksService`: Manages task CRUD operations and syncs with ConfigService
 - `ColumnsService`: Manages column CRUD operations and ordering
 - `ParticipantsService`: Manages participant list
 
 **Persistence Layer**:
+
 - `ConfigService`: Acts as the main interface to LocalstorageService, handles date serialization/deserialization
 - `LocalstorageService`: Low-level localStorage operations with three scopes: columns, tasks, participants
 
 **Export/Import Services**:
+
 - `ExportService`: Generates participant-specific PDFs using @pdfme/generator, creates screenshots using html-to-image, and packages multiple PDFs into ZIP files using @zip.js/zip.js
 - `ShareService`: Exports/imports config as base64-encoded JSON for sharing schedules
 
 **UI/UX Services**:
+
 - `MobileDetectionService`: Detects mobile devices (touch screen + small viewport or mobile user agent) with reactive resize handling
 - `LogoService`: Manages custom SVG logo upload/storage with DOMPurify sanitization to prevent XSS
 
@@ -103,22 +112,28 @@ app/
 2. **Component Prefix**: Use `sch-` prefix for all component selectors (configured in angular.json).
 
 3. **Drag and Drop**:
+
    - Columns use Angular CDK drag-drop
    - Tasks use angular-calendar's built-in drag/resize
 
 4. **Export Functionality**:
+
    - Whole schedule: Screenshot as PNG
    - Per participant: Filtered schedules as PDFs in a ZIP file
    - Share: Base64-encoded JSON config for import/export
 
 5. **Localization**: Spanish locale (es) registered for date formatting.
 
+6. **Styles**: TailwindCSS with custom colors defined in tailwind.config.js. Use tailwind classes but if theres a complex style, create component-specific SCSS files.
+
 ## Future Development Notes
 
 From README.md future features:
+
 - Refactor the whole codebase
 - Add websockets support (for real-time collaboration)
 - Add proper alerts and error handling
 
 Known TODO comments in code:
+
 - Add schema validations for localStorage data (localstorage.service.ts:93)
